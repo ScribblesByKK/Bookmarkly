@@ -1,0 +1,22 @@
+<Solution>
+  <Configurations>
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/_Items/">
+    <File Path="Directory.Build.Props" />
+    <File Path="Directory.Packages.Props" />
+  </Folder>
+  <Project Path="Bookmarkly.App/Bookmarkly.App.csproj">
+    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+    <Deploy />
+  </Project>
+  <Project Path="Bookmarkly.Entities/Bookmarkly.Entities.csproj" Id="601ee861-cf1e-470c-9702-0ec1b2a32e85" />
+  <Project Path="Bookmarkly.Library/Bookmarkly.Library.csproj" Id="a80711d4-483e-4d12-a9ee-832b305367dc" />
+  <Project Path="Bookmarkly.ViewContracts/Bookmarkly.ViewContracts.csproj" Id="4659d8b9-9280-4777-9163-e037cd75773f" />
+  <Project Path="Bookmarkly.ViewModels/Bookmarkly.ViewModels.csproj" Id="01597b2f-54eb-40f5-9beb-d67310103cdd" />
+  <Project Path="Bookmarkly.Views/Bookmarkly.Views.csproj" Id="c92089a8-1b8c-43b3-bf4c-4ef7cca44160" />
+</Solution>

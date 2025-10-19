@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+	</PropertyGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\Bookmarkly.Entities\Bookmarkly.Entities.csproj" />
+	  <ProjectReference Include="..\Bookmarkly.Library\Bookmarkly.Library.csproj" />
+	  <ProjectReference Include="..\Bookmarkly.ViewContracts\Bookmarkly.ViewContracts.csproj" />
+	</ItemGroup>
+</Project>

@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Bookmarkly.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Bookmarkly.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
