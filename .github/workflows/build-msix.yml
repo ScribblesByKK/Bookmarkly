@@ -1,0 +1,56 @@
+name: Build MSIX Package
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+  pull_request:
+    branches:
+      - master
+      - dev
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        platform: [x64, ARM64]
+        configuration: [Release]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore NuGet packages
+      run: dotnet restore Bookmarkly.slnx
+
+    - name: Build solution
+      run: msbuild Bookmarkly.slnx /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} /p:AppxBundle=Always /p:AppxBundlePlatforms="${{ matrix.platform }}" /p:UapAppxPackageBuildMode=SideloadOnly /p:GenerateAppInstallerFile=False
+
+    - name: Upload MSIX package
+      uses: actions/upload-artifact@v4
+      with:
+        name: msix-package-${{ matrix.platform }}-${{ matrix.configuration }}
+        path: |
+          Bookmarkly.App/AppPackages/**/*.msix
+          Bookmarkly.App/AppPackages/**/*.msixbundle
+        if-no-files-found: warn
+
+    - name: Upload build logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs-${{ matrix.platform }}-${{ matrix.configuration }}
+        path: |
+          **/*.binlog
+          **/*.log
+        if-no-files-found: ignore
