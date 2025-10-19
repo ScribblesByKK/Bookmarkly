@@ -67,7 +67,8 @@ jobs:
           /p:PackageCertificatePassword="${{ env.CERT_PASSWORD }}" `
           /p:GenerateAppInstallerFile=true `
           /p:AppInstallerUri="https://github.com/${{ github.repository }}/releases/download/latest/" `
-          /p:AppxPackageTestDir="${{ github.workspace }}\AppPackages\" `
+          /p:PublishTrimmed=false `
+          /p:PublishReadyToRun=false `
           /restore
       shell: pwsh
       
