@@ -1,1 +1,13 @@
-<Project/>
+<Project>
+	<PropertyGroup>
+		<!-- Common properties for all projects -->
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<!-- Properties for Windows projects -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-windows10.0.26100.0'">
+		<TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+	</PropertyGroup>
+</Project>
