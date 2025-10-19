@@ -31,10 +31,19 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Restore NuGet packages
-      run: dotnet restore Bookmarkly.slnx
+      run: msbuild Bookmarkly.slnx /t:Restore /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }}
 
     - name: Build solution
-      run: msbuild Bookmarkly.slnx /p:Configuration=${{ matrix.configuration }} /p:Platform=${{ matrix.platform }} /p:AppxBundle=Always /p:AppxBundlePlatforms="${{ matrix.platform }}" /p:UapAppxPackageBuildMode=SideloadOnly /p:GenerateAppInstallerFile=False
+      run: |
+        msbuild Bookmarkly.slnx `
+          /p:Configuration=${{ matrix.configuration }} `
+          /p:Platform=${{ matrix.platform }} `
+          /p:AppxBundle=Always `
+          /p:AppxBundlePlatforms="${{ matrix.platform }}" `
+          /p:UapAppxPackageBuildMode=SideloadOnly `
+          /p:GenerateAppInstallerFile=False `
+          /m `
+          /bl:build-${{ matrix.platform }}-${{ matrix.configuration }}.binlog
 
     - name: Upload MSIX package
       uses: actions/upload-artifact@v4
@@ -51,6 +60,7 @@ jobs:
       with:
         name: build-logs-${{ matrix.platform }}-${{ matrix.configuration }}
         path: |
+          *.binlog
           **/*.binlog
           **/*.log
         if-no-files-found: ignore
