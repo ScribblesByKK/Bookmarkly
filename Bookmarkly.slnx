@@ -14,6 +14,7 @@
     <Platform Solution="*|x86" Project="x86" />
     <Deploy />
   </Project>
+  <Project Path="Bookmarkly.ArchTests/Bookmarkly.ArchTests.csproj" Id="b8a1c5d3-4e2f-4a9d-8c7e-1f5b6d9a8e2c" />
   <Project Path="Bookmarkly.Entities/Bookmarkly.Entities.csproj" Id="601ee861-cf1e-470c-9702-0ec1b2a32e85" />
   <Project Path="Bookmarkly.Library/Bookmarkly.Library.csproj" Id="a80711d4-483e-4d12-a9ee-832b305367dc" />
   <Project Path="Bookmarkly.ViewContracts/Bookmarkly.ViewContracts.csproj" Id="4659d8b9-9280-4777-9163-e037cd75773f" />
