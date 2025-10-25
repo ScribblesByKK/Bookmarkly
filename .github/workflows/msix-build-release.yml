@@ -75,7 +75,7 @@ jobs:
     - name: Upload MSIX bundle artifact
       uses: actions/upload-artifact@v4
       with:
-        name: msix-bundle-${{ github.sha }}
+        name: Bookmarkly-msix-${{ github.sha }}
         path: AppPackages/**/*.*
         if-no-files-found: error
     - name: Create Release
@@ -84,7 +84,7 @@ jobs:
       with:
         tag_name: v${{ github.run_number }}
         name: Release v${{ github.run_number }}
-        files: Bookmarkly-msix-${{ github.sha }}.zip
+        files: Bookmarkly-msix-${{ github.sha }}
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
