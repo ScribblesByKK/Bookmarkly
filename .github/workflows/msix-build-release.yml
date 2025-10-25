@@ -57,6 +57,7 @@ jobs:
           /p:PublishTrimmed=false `
           /p:UapAppxPackageBuildMode=SideloadOnly `
           /p:AppxBundle=Always `
+          /p:RuntimeIdentifier=win-x64 `
           /p:AppxBundlePlatforms=${{ env.PLATFORM }} `
           /p:AppxPackageDir="${{ github.workspace }}\AppPackages\" `
           /p:AppxPackageSigningEnabled=true `
