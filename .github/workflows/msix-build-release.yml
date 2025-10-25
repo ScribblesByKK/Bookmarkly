@@ -78,14 +78,13 @@ jobs:
         name: msix-bundle-${{ github.sha }}
         path: AppPackages/**/*.*
         if-no-files-found: error
-        
     - name: Create Release
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ github.run_number }}
         name: Release v${{ github.run_number }}
-        files: AppPackages/**/*.*
+        files: Bookmarkly-msix-${{ github.sha }}.zip
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
