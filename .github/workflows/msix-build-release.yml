@@ -1,0 +1,84 @@
+name: MSIX Build and Release
+
+on:
+  # Run on pull requests to main and dev branches
+  pull_request:
+    branches:
+      - main
+      - dev
+  # Run on push to main branch (merges)
+  push:
+    branches:
+      - main
+
+env:
+  SOLUTION_FILE_PATH: Bookmarkly.slnx
+  PROJECT_PATH: Bookmarkly.App/Bookmarkly.App.csproj
+  CONFIGURATION: Release
+  PLATFORM: x64
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.x'
+        
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+      
+    - name: Restore NuGet packages
+      run: dotnet restore ${{ env.SOLUTION_FILE_PATH }}
+      
+    - name: Create temporary signing certificate
+      run: |
+        $cert = New-SelfSignedCertificate -Type Custom -Subject "CN=Bookmarkly-Temp-Cert" -KeyUsage DigitalSignature -FriendlyName "Bookmarkly Temp Signing Cert" -CertStoreLocation "Cert:\CurrentUser\My" -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+        $password = ConvertTo-SecureString -String "TempPassword123!" -Force -AsPlainText
+        Export-PfxCertificate -Cert "Cert:\CurrentUser\My\$($cert.Thumbprint)" -FilePath GitHubActionsWorkflow.pfx -Password $password
+        echo "Certificate created successfully"
+      shell: pwsh
+      
+
+    - name: Build MSIX package
+      run: |
+        msbuild ${{ env.PROJECT_PATH }} `
+          /p:Configuration=${{ env.CONFIGURATION }} `
+          /p:Platform=${{ env.PLATFORM }} `
+          /p:UapAppxPackageBuildMode=SideloadOnly `
+          /p:AppxBundle=Always `
+          /p:AppxBundlePlatforms=${{ env.PLATFORM }} `
+          /p:AppxPackageDir="${{ github.workspace }}\AppPackages\" `
+          /p:AppxPackageSigningEnabled=true `
+          /p:PackageCertificateKeyFile="${{ github.workspace }}\GitHubActionsWorkflow.pfx" `
+          /p:PackageCertificatePassword="TempPassword123!" `
+          /restore
+      shell: pwsh
+      
+    - name: Remove certificate file
+      run: Remove-Item -Path GitHubActionsWorkflow.pfx -Force
+      shell: pwsh
+      if: always()
+      
+    - name: Upload MSIX bundle artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: msix-bundle-${{ github.sha }}
+        path: AppPackages/**/*.msixbundle
+        if-no-files-found: error
+        
+    - name: Create Release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ github.run_number }}
+        name: Release v${{ github.run_number }}
+        files: AppPackages/**/*.msixbundle
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
