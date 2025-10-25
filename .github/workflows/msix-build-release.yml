@@ -76,7 +76,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: msix-bundle-${{ github.sha }}
-        path: AppPackages/**/*.msixbundle
+        path: AppPackages/**/*.*
         if-no-files-found: error
         
     - name: Create Release
