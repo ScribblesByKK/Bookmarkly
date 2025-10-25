@@ -67,6 +67,17 @@ jobs:
           /restore
       shell: pwsh
       
+    - name: Package AppPackages into zip
+      run: |
+        $zipName = "Bookmarkly-msix-${{ github.sha }}.zip"
+        if (-not (Test-Path -Path "AppPackages")) {
+          Write-Error "AppPackages folder not found. Failing so you can inspect logs."
+          exit 1
+        }
+        Compress-Archive -Path "AppPackages\*" -DestinationPath $zipName -Force
+        Write-Host "Created zip: $zipName"
+      shell: pwsh
+
     - name: Remove certificate file
       run: Remove-Item -Path GitHubActionsWorkflow.pfx -Force
       shell: pwsh
@@ -76,15 +87,16 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Bookmarkly-msix-${{ github.sha }}
-        path: AppPackages/**/*.*
+        path: Bookmarkly-msix-${{ github.sha }}.zip
         if-no-files-found: error
+
     - name: Create Release
     #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ github.run_number }}
         name: Release v${{ github.run_number }}
-        files: Bookmarkly-msix-${{ github.sha }}
+        files: Bookmarkly-msix-${{ github.sha }}.zip
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
