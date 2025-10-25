@@ -63,6 +63,7 @@ jobs:
           /p:AppxPackageSigningEnabled=true `
           /p:PackageCertificateKeyFile="${{ github.workspace }}\GitHubActionsWorkflow.pfx" `
           /p:PackageCertificatePassword="${{ secrets.CERT_PASSWORD || 'TempPassword123!' }}" `
+          /t:_GenerateAppxPackage
           /restore
       shell: pwsh
       
