@@ -17,6 +17,9 @@ env:
   CONFIGURATION: Release
   PLATFORM: x64
 
+permissions:
+  contents: write  # Required for creating releases
+
 jobs:
   build:
     runs-on: windows-latest
