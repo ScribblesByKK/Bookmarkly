@@ -54,7 +54,6 @@ jobs:
         msbuild ${{ env.PROJECT_PATH }} `
           /p:Configuration=${{ env.CONFIGURATION }} `
           /p:Platform=${{ env.PLATFORM }} `
-          /p:PublishTrimmed=false `
           /p:UapAppxPackageBuildMode=SideloadOnly `
           /p:AppxBundle=Always `
           /p:RuntimeIdentifier=win-x64 `
