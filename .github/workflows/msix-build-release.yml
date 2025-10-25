@@ -39,12 +39,11 @@ jobs:
     - name: Create temporary signing certificate
       run: |
         $cert = New-SelfSignedCertificate -Type Custom -Subject "CN=Bookmarkly-Temp-Cert" -KeyUsage DigitalSignature -FriendlyName "Bookmarkly Temp Signing Cert" -CertStoreLocation "Cert:\CurrentUser\My" -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
-        $password = ConvertTo-SecureString -String "TempPassword123!" -Force -AsPlainText
+        $password = ConvertTo-SecureString -String "${{ secrets.CERT_PASSWORD || 'TempPassword123!' }}" -Force -AsPlainText
         Export-PfxCertificate -Cert "Cert:\CurrentUser\My\$($cert.Thumbprint)" -FilePath GitHubActionsWorkflow.pfx -Password $password
         echo "Certificate created successfully"
       shell: pwsh
       
-
     - name: Build MSIX package
       run: |
         msbuild ${{ env.PROJECT_PATH }} `
@@ -56,7 +55,7 @@ jobs:
           /p:AppxPackageDir="${{ github.workspace }}\AppPackages\" `
           /p:AppxPackageSigningEnabled=true `
           /p:PackageCertificateKeyFile="${{ github.workspace }}\GitHubActionsWorkflow.pfx" `
-          /p:PackageCertificatePassword="TempPassword123!" `
+          /p:PackageCertificatePassword="${{ secrets.CERT_PASSWORD || 'TempPassword123!' }}" `
           /restore
       shell: pwsh
       
