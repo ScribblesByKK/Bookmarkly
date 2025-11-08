@@ -27,6 +27,25 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+      
+    - name: Update version
+      id: version
+      run: |
+        ./update-version.ps1
+      shell: pwsh
+      
+    - name: Commit version changes
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add version.json Bookmarkly.App/Package.appxmanifest
+        git diff --staged --quiet || git commit -m "chore: update version to ${{ steps.version.outputs.version }} [skip ci]"
+        git push
+      shell: pwsh
       
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -94,8 +113,8 @@ jobs:
     #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v${{ github.run_number }}
-        name: Release v${{ github.run_number }}
+        tag_name: v${{ steps.version.outputs.version }}
+        name: Release v${{ steps.version.outputs.version }}
         files: Bookmarkly-msix-${{ github.sha }}.zip
         generate_release_notes: true
       env:
