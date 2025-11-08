@@ -66,9 +66,10 @@ $manifestPath = "Bookmarkly.App/Package.appxmanifest"
 if (Test-Path $manifestPath) {
     $manifest = Get-Content $manifestPath -Raw
     
-    # Replace the version in the Identity element
+    # Replace the version in the Identity element only
     # The version must be in format x.y.z.w where each component is 0-65535
-    $manifest = $manifest -replace '(Version=")[^"]+(")', "`${1}$fullVersion`${2}"
+    # Use a more specific regex to target only the Identity element's Version attribute
+    $manifest = $manifest -replace '(<Identity[^>]*Version=")[^"]+(")', "`${1}$fullVersion`${2}"
     
     Set-Content $manifestPath $manifest
     Write-Host "Updated $manifestPath with version $fullVersion"
