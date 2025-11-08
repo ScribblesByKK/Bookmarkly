@@ -77,7 +77,11 @@ if (Test-Path $manifestPath) {
 }
 
 # Output the version for GitHub Actions
-Write-Host "##[set-output name=version;]$fullVersion"
-Write-Output "version=$fullVersion" >> $env:GITHUB_OUTPUT
+if ($env:GITHUB_OUTPUT) {
+    Write-Output "version=$fullVersion" >> $env:GITHUB_OUTPUT
+    Write-Host "Version output to GitHub Actions: $fullVersion"
+} else {
+    Write-Host "Not running in GitHub Actions context"
+}
 
 Write-Host "Version update completed successfully"

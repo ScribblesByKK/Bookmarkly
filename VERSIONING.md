@@ -64,7 +64,46 @@ To manually change the major or revision version:
 
 ## Preventing Infinite CI Loops
 
-The GitHub Actions workflow commits version changes with the message `[skip ci]`, which prevents GitHub Actions from triggering another workflow run. This ensures that the version commit doesn't cause an infinite loop.
+**Question: Is it possible in CI action to make a commit to main? Will it not trigger a new CI action?**
+
+**Answer:** Yes, it is possible, and there are two main approaches to prevent infinite loops:
+
+### Approach 1: Using `[skip ci]` in commit message (Implemented)
+
+GitHub Actions recognizes certain keywords in commit messages that prevent triggering workflows:
+- `[skip ci]`
+- `[ci skip]`
+- `[no ci]`
+- `[skip actions]`
+- `[actions skip]`
+
+Our implementation uses `[skip ci]` in the commit message when committing version changes:
+```bash
+git commit -m "chore: update version to X.YYWW.B.R [skip ci]"
+```
+
+This prevents the version commit from triggering another CI run, thus avoiding an infinite loop.
+
+### Approach 2: Conditional execution (Additional safety)
+
+The workflow only commits version changes on `push` events to the `main` branch, not on `pull_request` events. This provides an additional layer of protection:
+
+```yaml
+- name: Commit version changes
+  if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  run: |
+    # commit and push
+```
+
+### How it works in practice:
+
+1. Developer pushes code to main
+2. CI workflow is triggered
+3. Version is updated and committed with `[skip ci]`
+4. The version commit does NOT trigger another CI run
+5. Build continues with the updated version
+
+This approach is safe, widely used, and recommended by GitHub.
 
 ## Files Involved
 
