@@ -34,7 +34,7 @@ jobs:
     - name: Update version
       id: version
       run: |
-        ./update-version.ps1
+        ./build/update-version.ps1
       shell: pwsh
       
     - name: Commit version changes
@@ -42,7 +42,7 @@ jobs:
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add version.json Bookmarkly.App/Package.appxmanifest
+        git add build/version.json Bookmarkly.App/Package.appxmanifest
         git diff --staged --quiet || git commit -m "chore: update version to ${{ steps.version.outputs.version }} [skip ci]"
         git push
       shell: pwsh
@@ -88,7 +88,7 @@ jobs:
       
     - name: Package AppPackages into zip
       run: |
-        $zipName = "Bookmarkly-msix-${{ github.sha }}.zip"
+        $zipName = "Bookmarkly_${{ steps.version.outputs.version }}.zip"
         if (-not (Test-Path -Path "AppPackages")) {
           Write-Error "AppPackages folder not found. Failing so you can inspect logs."
           exit 1
@@ -105,8 +105,8 @@ jobs:
     - name: Upload MSIX bundle artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Bookmarkly-msix-${{ github.sha }}
-        path: Bookmarkly-msix-${{ github.sha }}.zip
+        name: Bookmarkly_${{ steps.version.outputs.version }}
+        path: Bookmarkly_${{ steps.version.outputs.version }}.zip
         if-no-files-found: error
 
     - name: Create Release
@@ -115,7 +115,7 @@ jobs:
       with:
         tag_name: v${{ steps.version.outputs.version }}
         name: Release v${{ steps.version.outputs.version }}
-        files: Bookmarkly-msix-${{ github.sha }}.zip
+        files: Bookmarkly_${{ steps.version.outputs.version }}.zip
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

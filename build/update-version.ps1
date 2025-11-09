@@ -7,7 +7,7 @@
 
 param(
     [Parameter(Mandatory=$false)]
-    [string]$VersionFilePath = "version.json"
+    [string]$VersionFilePath = "build/version.json"
 )
 
 # Read the version file
