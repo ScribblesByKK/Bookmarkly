@@ -26,16 +26,16 @@ Where:
 
 ## How It Works
 
-1. The `version.json` file stores the persistent values:
+1. The `build/version.json` file stores the persistent values:
    - `major`: The major version (developer-controlled)
    - `build`: The current build number (auto-incremented)
    - `revision`: The revision number (developer-controlled)
 
 2. During CI execution (on push to main):
-   - The `update-version.ps1` script runs
+   - The `build/update-version.ps1` script runs
    - It calculates the `yyww` or `yyyww` component based on current date
    - It increments the `build` number
-   - It updates both `version.json` and `Package.appxmanifest`
+   - It updates both `build/version.json` and `Package.appxmanifest`
    - The changes are committed back to the repository with `[skip ci]` to prevent infinite loops
 
 3. The updated version is used throughout the build and release process
@@ -44,7 +44,7 @@ Where:
 
 To manually change the major or revision version:
 
-1. Edit `version.json`:
+1. Edit `build/version.json`:
    ```json
    {
      "major": 2,
@@ -55,7 +55,7 @@ To manually change the major or revision version:
 
 2. Commit and push to main:
    ```bash
-   git add version.json
+   git add build/version.json
    git commit -m "chore: bump major version to 2"
    git push
    ```
@@ -107,7 +107,7 @@ This approach is safe, widely used, and recommended by GitHub.
 
 ## Files Involved
 
-- `version.json`: Stores major, build, and revision values
-- `update-version.ps1`: PowerShell script that calculates and updates version
+- `build/version.json`: Stores major, build, and revision values
+- `build/update-version.ps1`: PowerShell script that calculates and updates version
 - `.github/workflows/msix-build-release.yml`: CI workflow that executes versioning
 - `Bookmarkly.App/Package.appxmanifest`: MSIX manifest with version number
