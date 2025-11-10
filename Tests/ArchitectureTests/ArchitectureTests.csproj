@@ -12,6 +12,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="coverlet.msbuild" />
         <PackageReference Include="TngTech.ArchUnitNET" />
         <PackageReference Include="TngTech.ArchUnitNET.MSTestV2" />
     </ItemGroup>
