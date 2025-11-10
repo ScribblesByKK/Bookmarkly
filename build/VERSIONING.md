@@ -12,7 +12,7 @@ Where:
   - **yy**: Last 2 digits of the year (for years < 2100)
   - **yyy**: Last 3 digits of the year (for years >= 2100)
   - **ww**: ISO 8601 week number (01-53)
-- **build**: Auto-incremented build number (starts at 1, increments on each CI run)
+- **build**: Auto-incremented build number (starts at 1 for each new week, increments on each CI run within the same week)
 - **revision**: Revision number (manually set by developers, default: 0)
 
 ## Examples
@@ -20,7 +20,7 @@ Where:
 - Job 1 on January 1, 2025: `1.2501.1.0`
 - Job 2 on January 1, 2025: `1.2501.2.0`
 - Job 3 on January 2, 2025: `1.2501.3.0`
-- Job 4 on January 9, 2025 (week 2): `1.2502.4.0`
+- Job 4 on January 9, 2025 (week 2): `1.2502.1.0`
 - Job 1 on January 1, 2100: `1.10001.1.0` (note the yyyww format)
 - Job 5 on June 15, 2150 (week 25): `1.15025.5.0`
 
@@ -28,14 +28,16 @@ Where:
 
 1. The `build/version.json` file stores the persistent values:
    - `major`: The major version (developer-controlled)
-   - `build`: The current build number (auto-incremented)
+   - `build`: The current build number (auto-incremented within the same week)
    - `revision`: The revision number (developer-controlled)
+   - `lastYyww`: The last yyww value to detect week changes
 
 2. During CI execution (on push to main):
    - The `build/update-version.ps1` script runs
    - It calculates the `yyww` or `yyyww` component based on current date
-   - It increments the `build` number
-   - It updates both `build/version.json` and `Package.appxmanifest`
+   - If the week has changed (yyww differs from lastYyww), it resets the build number to 1
+   - If the week hasn't changed, it increments the `build` number
+   - It updates both `build/version.json` (including lastYyww) and `Package.appxmanifest`
    - The changes are committed back to the repository with `[skip ci]` to prevent infinite loops
 
 3. The updated version is used throughout the build and release process
@@ -49,7 +51,8 @@ To manually change the major or revision version:
    {
      "major": 2,
      "build": 0,
-     "revision": 0
+     "revision": 0,
+     "lastYyww": "2501"
    }
    ```
 

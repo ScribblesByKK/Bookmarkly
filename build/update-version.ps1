@@ -43,8 +43,16 @@ if ($year -ge 2100) {
     $yyww = "$yearString$weekString"
 }
 
-# Increment build number
-$newBuild = $versionData.build + 1
+# Check if week has changed and reset build number if needed
+$lastYyww = $versionData.lastYyww
+if ($lastYyww -ne $yyww) {
+    # Week has changed, reset build number to 0 (will be incremented to 1)
+    Write-Host "Week changed from $lastYyww to $yyww, resetting build number"
+    $newBuild = 1
+} else {
+    # Same week, increment build number
+    $newBuild = $versionData.build + 1
+}
 
 # Construct the full version
 $fullVersion = "$($versionData.major).$yyww.$newBuild.$($versionData.revision)"
@@ -57,6 +65,7 @@ Write-Host "Full version: $fullVersion"
 
 # Update version data
 $versionData.build = $newBuild
+$versionData.lastYyww = $yyww
 
 # Save updated version file
 $versionData | ConvertTo-Json | Set-Content $VersionFilePath
