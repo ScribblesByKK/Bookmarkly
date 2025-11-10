@@ -1,11 +1,6 @@
 name: MSIX Build and Release
 
 on:
-  # Run on pull requests to main and dev branches
-  pull_request:
-    branches:
-      - main
-      - dev
   # Run on push to main branch (merges)
   push:
     branches:
@@ -110,7 +105,7 @@ jobs:
         if-no-files-found: error
 
     - name: Create Release
-    #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ steps.version.outputs.version }}
