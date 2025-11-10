@@ -4,9 +4,22 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Folder Name="/Abstractions/">
+    <Project Path="Bookmarkly.Abstractions/Bookmarkly.Views.Abstractions.csproj" />
+    <Project Path="Bookmarkly.Entities.Abstractions/Bookmarkly.Entities.Abstractions.csproj" Id="e4291e74-0bda-4ae8-a52a-b1d7f4763e94" />
+    <Project Path="Bookmarkly.Library.Abstractions/Bookmarkly.Library.Abstractions.csproj" Id="2e38b811-5f56-4002-bbc3-f7c975ba3ff6" />
+  </Folder>
+  <Folder Name="/Implementations/" />
+  <Folder Name="/Implementations/Instapaper/">
+    <Project Path="Instapaper/Instapaper.Entities/Instapaper.Entities.csproj" Id="937bc212-0322-4714-890d-23a112f5b380" />
+    <Project Path="Instapaper/Instapaper.Library/Instapaper.Library.csproj" Id="71f0f60b-6586-4c29-b8ed-6142d2d3ae64" />
+  </Folder>
   <Folder Name="/_Items/">
     <File Path="Directory.Build.Props" />
     <File Path="Directory.Packages.Props" />
+  </Folder>
+  <Folder Name="/_Tests/">
+    <Project Path="Tests/ArchitectureTests/ArchitectureTests.csproj" Id="edef401a-ef1f-4d1f-ad39-835e698c835c" />
   </Folder>
   <Project Path="Bookmarkly.App/Bookmarkly.App.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
@@ -14,9 +27,6 @@
     <Platform Solution="*|x86" Project="x86" />
     <Deploy />
   </Project>
-  <Project Path="Bookmarkly.Entities/Bookmarkly.Entities.csproj" Id="601ee861-cf1e-470c-9702-0ec1b2a32e85" />
-  <Project Path="Bookmarkly.Library/Bookmarkly.Library.csproj" Id="a80711d4-483e-4d12-a9ee-832b305367dc" />
-  <Project Path="Bookmarkly.ViewContracts/Bookmarkly.ViewContracts.csproj" Id="4659d8b9-9280-4777-9163-e037cd75773f" />
   <Project Path="Bookmarkly.ViewModels/Bookmarkly.ViewModels.csproj" Id="01597b2f-54eb-40f5-9beb-d67310103cdd" />
   <Project Path="Bookmarkly.Views/Bookmarkly.Views.csproj" Id="c92089a8-1b8c-43b3-bf4c-4ef7cca44160" />
 </Solution>

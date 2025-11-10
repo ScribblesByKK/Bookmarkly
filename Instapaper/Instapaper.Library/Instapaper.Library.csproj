@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\..\Bookmarkly.Entities.Abstractions\Bookmarkly.Entities.Abstractions.csproj" />
+        <ProjectReference Include="..\..\Bookmarkly.Library.Abstractions\Bookmarkly.Library.Abstractions.csproj" />
+        <ProjectReference Include="..\Instapaper.Entities\Instapaper.Entities.csproj" />
+    </ItemGroup>
+</Project>
