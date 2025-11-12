@@ -13,7 +13,7 @@ A bookmark management application for Windows.
 
 ## Development
 
-This project uses .NET 8 and Windows App SDK.
+This project uses .NET 10 and Windows App SDK.
 
 ### Building
 
