@@ -21,7 +21,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0
@@ -43,7 +43,7 @@ jobs:
       shell: pwsh
       
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '10.x'
         
@@ -98,7 +98,7 @@ jobs:
       if: always()
       
     - name: Upload MSIX bundle artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: Bookmarkly_${{ steps.version.outputs.version }}
         path: Bookmarkly_${{ steps.version.outputs.version }}.zip
@@ -106,7 +106,7 @@ jobs:
 
     - name: Create Release
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ steps.version.outputs.version }}
         name: Release v${{ steps.version.outputs.version }}
