@@ -25,6 +25,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0
+        submodules: true
       
     - name: Update version
       id: version
