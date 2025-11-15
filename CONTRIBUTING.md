@@ -85,6 +85,19 @@ dotnet test Tests/ArchitectureTests/ArchitectureTests.csproj
 
 This project uses `.editorconfig` to maintain consistent code style. Please ensure your IDE respects these settings.
 
+## GitHub Actions Setup
+
+For repository maintainers: The GitHub Actions workflows require access to the private Megakat submodule. 
+
+### Required Secrets
+
+To enable the workflows to check out the Megakat submodule, you need to configure a Personal Access Token (PAT):
+
+1. Create a GitHub Personal Access Token with `repo` scope
+2. Add it as a repository secret named `GH_PAT`
+
+The workflows will use `GH_PAT` if available, otherwise they'll fall back to the default `GITHUB_TOKEN` (which may not have access to private submodules).
+
 ## Questions?
 
 If you have questions or need help, please open an issue on GitHub.
