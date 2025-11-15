@@ -16,8 +16,11 @@ permissions:
   contents: write  # Required for creating releases
 
 jobs:
-  build:
+  bump-version:
+    name: Bump Version
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     
     steps:
     - name: Checkout code
@@ -42,7 +45,21 @@ jobs:
         git diff --staged --quiet || git commit -m "chore: update version to ${{ steps.version.outputs.version }} [skip ci]"
         git push
       shell: pwsh
-      
+
+  build:
+    name: Build Solution
+    runs-on: windows-latest
+    needs: bump-version
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        ref: main
+        token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        fetch-depth: 1
+        submodules: recursive
+    
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
@@ -51,7 +68,7 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2        
       with:
-          vs-version: '[17.9,)'
+        vs-version: '[17.9,)'
       
     - name: Restore NuGet packages
       run: dotnet restore ${{ env.SOLUTION_FILE_PATH }}
@@ -82,9 +99,33 @@ jobs:
           /restore
       shell: pwsh
       
-    - name: Package AppPackages into zip
+    - name: Remove certificate file
+      run: Remove-Item -Path GitHubActionsWorkflow.pfx -Force
+      shell: pwsh
+      if: always()
+      
+    - name: Upload build output
+      uses: actions/upload-artifact@v5
+      with:
+        name: build-output
+        path: AppPackages/
+        retention-days: 1
+
+  package:
+    name: Create Package
+    runs-on: windows-latest
+    needs: [bump-version, build]
+    
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v5
+      with:
+        name: build-output
+        path: AppPackages/
+      
+    - name: Package into zip
       run: |
-        $zipName = "Bookmarkly_${{ steps.version.outputs.version }}.zip"
+        $zipName = "Bookmarkly_${{ needs.bump-version.outputs.version }}.zip"
         if (-not (Test-Path -Path "AppPackages")) {
           Write-Error "AppPackages folder not found. Failing so you can inspect logs."
           exit 1
@@ -92,26 +133,33 @@ jobs:
         Compress-Archive -Path "AppPackages\*" -DestinationPath $zipName -Force
         Write-Host "Created zip: $zipName"
       shell: pwsh
-
-    - name: Remove certificate file
-      run: Remove-Item -Path GitHubActionsWorkflow.pfx -Force
-      shell: pwsh
-      if: always()
       
-    - name: Upload MSIX bundle artifact
+    - name: Upload package artifact
       uses: actions/upload-artifact@v5
       with:
-        name: Bookmarkly_${{ steps.version.outputs.version }}
-        path: Bookmarkly_${{ steps.version.outputs.version }}.zip
+        name: Bookmarkly_${{ needs.bump-version.outputs.version }}
+        path: Bookmarkly_${{ needs.bump-version.outputs.version }}.zip
         if-no-files-found: error
 
+  release:
+    name: Create Release
+    runs-on: windows-latest
+    needs: [bump-version, package]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Download package artifact
+      uses: actions/download-artifact@v5
+      with:
+        name: Bookmarkly_${{ needs.bump-version.outputs.version }}
+        path: .
+    
     - name: Create Release
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v${{ steps.version.outputs.version }}
-        name: Release v${{ steps.version.outputs.version }}
-        files: Bookmarkly_${{ steps.version.outputs.version }}.zip
+        tag_name: v${{ needs.bump-version.outputs.version }}
+        name: Release v${{ needs.bump-version.outputs.version }}
+        files: Bookmarkly_${{ needs.bump-version.outputs.version }}.zip
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
