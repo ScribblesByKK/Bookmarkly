@@ -20,9 +20,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v5
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         fetch-depth: 0
-        submodules: true
+        submodules: recursive
       
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
