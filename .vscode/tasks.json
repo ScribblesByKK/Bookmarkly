@@ -1,0 +1,78 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build-sln",
+			"type": "shell",
+			"command": "msbuild",
+			"args": [
+				   "${workspaceFolder}/${config:solutionFile}",
+				"/p:Configuration=${config:dotnet.defaultSolution.configuration}",
+				"/p:Platform=${config:dotnet.defaultSolution.platform}"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "always"
+			},
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "build-sln-interactive",
+			"type": "shell",
+			"command": "msbuild",
+			"args": [
+				"${input:solutionFile}",
+				"/p:Configuration=${input:configuration}",
+				"/p:Platform=${input:platform}"
+			],
+			"group": "build",
+			"presentation": {
+				"reveal": "always"
+			},
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "build-current-project",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"${relativeFileDirname}",
+				"--configuration",
+				"${config:dotnet.defaultSolution.configuration}"
+			],
+			"group": "build",
+			"presentation": {
+				"reveal": "always"
+			},
+			"problemMatcher": "$msCompile"
+		}
+	],
+	"inputs": [
+		{
+			"id": "configuration",
+			"description": "Select build configuration",
+			"type": "pickString",
+			"options": [
+				"Debug",
+				"Release"
+			],
+			"default": "Debug"
+		},
+		{
+			"id": "platform",
+			"description": "Select platform",
+			"type": "pickString",
+			"options": [
+				"AnyCPU",
+				"x64",
+				"x86",
+				"ARM64"
+			],
+			"default": "x64"
+		}
+	]
+}

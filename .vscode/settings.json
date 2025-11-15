@@ -1,0 +1,22 @@
+{
+    // C# Dev Kit Configuration
+    "dotnet.defaultSolution.configuration": "Debug",
+    "dotnet.defaultSolution.platform": "x64",
+    "dotnet.defaultSolution": "${workspaceFolder}/${config:solutionFile}",
+    
+    // Additional C# settings
+    "omnisharp.defaultLaunchSolution": "${workspaceFolder}/${config:solutionFile}",
+    "omnisharp.enableMsBuildLoadProjectsOnDemand": true,
+    
+    // Build and deployment settings for UWP
+    "msbuild.buildOutputVerbosity": "normal",
+    "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+    
+    // UWP specific settings
+    "files.associations": {
+        "*.xaml": "xml"
+    },
+
+    // Centralized solution file name for tasks and settings
+    "solutionFile": "Bookmarkly.slnx"
+}
