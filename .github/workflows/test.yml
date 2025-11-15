@@ -19,6 +19,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        submodules: true
       
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
