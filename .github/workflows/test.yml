@@ -78,6 +78,22 @@ jobs:
         indicators: true
         output: both
         thresholds: '60 80'
+    
+    - name: Extract coverage percentage
+      id: extract_coverage
+      run: |
+        # Extract coverage percentage from the markdown output
+        if [ -f code-coverage-results.md ]; then
+          # Try to extract line coverage percentage
+          coverage=$(grep -oP 'Line Rate[^0-9]*\K[0-9]+(?:\.[0-9]+)?' code-coverage-results.md | head -1)
+          if [ -z "$coverage" ]; then
+            coverage="0"
+          fi
+          echo "coverage=$coverage" >> $GITHUB_OUTPUT
+        else
+          echo "coverage=0" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
 
     - name: Add Coverage PR Comment
       uses: marocchino/sticky-pull-request-comment@v2
@@ -89,14 +105,15 @@ jobs:
     
     - name: Create Coverage Badge
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      continue-on-error: true
       uses: schneegans/dynamic-badges-action@v1.7.0
       with:
         auth: ${{ secrets.GIST_SECRET }}
         gistID: bookmarkly-coverage-badge
         filename: coverage.json
         label: Coverage
-        message: ${{ steps.coverage.outputs.line-rate }}%
-        color: ${{ steps.coverage.outputs.line-rate > 80 && 'green' || steps.coverage.outputs.line-rate > 60 && 'yellow' || 'red' }}
+        message: ${{ steps.extract_coverage.outputs.coverage }}%
+        color: green
         namedLogo: .NET
 
 
