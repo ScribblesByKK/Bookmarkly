@@ -65,7 +65,26 @@ jobs:
         name: coverage-report
         path: coverage
       
+    - name: Check coverage file
+      id: check_coverage
+      run: |
+        # Check if coverage file exists and has package data
+        if [ -f coverage/coverage.cobertura.xml ]; then
+          # Check if the file contains any package elements (meaningful coverage data)
+          if grep -q '<packages>' coverage/coverage.cobertura.xml && grep -q '<package ' coverage/coverage.cobertura.xml; then
+            echo "has_coverage=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_coverage=false" >> $GITHUB_OUTPUT
+            echo "Coverage file exists but contains no package data (0% coverage)"
+          fi
+        else
+          echo "has_coverage=false" >> $GITHUB_OUTPUT
+          echo "Coverage file not found"
+        fi
+      shell: bash
+      
     - name: Code Coverage Report
+      if: steps.check_coverage.outputs.has_coverage == 'true'
       uses: irongut/CodeCoverageSummary@v1.3.0
       id: coverage
       with:
@@ -80,6 +99,7 @@ jobs:
         thresholds: '60 80'
     
     - name: Extract coverage percentage
+      if: steps.check_coverage.outputs.has_coverage == 'true'
       id: extract_coverage
       run: |
         # Extract coverage percentage from the markdown output
@@ -94,10 +114,16 @@ jobs:
           echo "coverage=0" >> $GITHUB_OUTPUT
         fi
       shell: bash
+    
+    - name: Set default coverage
+      if: steps.check_coverage.outputs.has_coverage == 'false'
+      id: default_coverage
+      run: echo "coverage=0" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Add Coverage PR Comment
       uses: marocchino/sticky-pull-request-comment@v2
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' && steps.check_coverage.outputs.has_coverage == 'true'
       continue-on-error: true
       with:
         recreate: true
@@ -112,7 +138,7 @@ jobs:
         gistID: bookmarkly-coverage-badge
         filename: coverage.json
         label: Coverage
-        message: ${{ steps.extract_coverage.outputs.coverage }}%
+        message: ${{ steps.check_coverage.outputs.has_coverage == 'true' && steps.extract_coverage.outputs.coverage || steps.default_coverage.outputs.coverage }}%
         color: green
         namedLogo: .NET
 
