@@ -2,6 +2,7 @@
 
 [![Tests](https://github.com/Kumara-Krishnan/Bookmarkly/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Kumara-Krishnan/Bookmarkly/actions/workflows/test.yml)
 [![Build and Release](https://github.com/Kumara-Krishnan/Bookmarkly/actions/workflows/msix-build-release.yml/badge.svg)](https://github.com/Kumara-Krishnan/Bookmarkly/releases/latest)
+[![Code Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Kumara-Krishnan/bookmarkly-coverage-badge/raw/coverage.json)](https://github.com/Kumara-Krishnan/Bookmarkly/actions/workflows/test.yml)
 
 A bookmark management application for Windows.
 
