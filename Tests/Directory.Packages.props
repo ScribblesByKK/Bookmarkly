@@ -1,3 +1,0 @@
-<Project>
-  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.Props', '$(MSBuildThisFileDirectory)../'))" />
-</Project>
