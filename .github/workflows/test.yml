@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - ci
   pull_request:
     branches:
       - main
+      - ci
       - dev
 
 jobs:
@@ -130,7 +132,7 @@ jobs:
         path: code-coverage-results.md
     
     - name: Create Coverage Badge
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci')
       continue-on-error: true
       uses: schneegans/dynamic-badges-action@v1.7.0
       with:
