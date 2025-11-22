@@ -30,7 +30,7 @@ jobs:
       run: dotnet restore Tests/ArchitectureTests/ArchitectureTests.csproj
       
     - name: Build tests
-      run: dotnet build Tests/ArchitectureTests/ArchitectureTests.csproj --configuration Release --no-restore
+      run: dotnet build Tests/ArchitectureTests/ArchitectureTests.csproj --configuration Release --no-restore /bl:dotnet-build.binlog
       
     - name: Run tests with coverage
       run: |
@@ -41,6 +41,14 @@ jobs:
           /p:CollectCoverage=true `
           /p:CoverletOutputFormat=cobertura `
           /p:CoverletOutput=./coverage/coverage.cobertura.xml
+      
+    - name: Upload build binary log
+      uses: actions/upload-artifact@v5
+      if: always()
+      with:
+        name: dotnet-build-binlog
+        path: dotnet-build.binlog
+        retention-days: 7
       
     - name: Upload coverage artifact
       uses: actions/upload-artifact@v5
