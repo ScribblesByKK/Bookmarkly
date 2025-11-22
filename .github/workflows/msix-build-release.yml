@@ -18,7 +18,7 @@ permissions:
 jobs:
   bump-version:
     name: Bump Version
-    runs-on: windows-latest
+    runs-on: self-hosted
     outputs:
       version: ${{ steps.version.outputs.version }}
     
@@ -48,7 +48,7 @@ jobs:
 
   build:
     name: Build Solution
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: bump-version
     
     steps:
@@ -60,15 +60,34 @@ jobs:
         fetch-depth: 1
         submodules: recursive
     
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: '10.x'
+    - name: Locate MSBuild using vswhere
+      id: msbuild
+      run: |
+        $vswherePath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        if (-not (Test-Path $vswherePath)) {
+          Write-Error "vswhere.exe not found at $vswherePath"
+          exit 1
+        }
         
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2        
-      with:
-        vs-version: '[17.9,)'
+        # Find VS Build Tools installation (VS 2022 17.x or VS 2026 18.x)
+        # Using -latest to get the newest version installed
+        $vsPath = & $vswherePath -version "[17.0,19.0)" -products * -requires Microsoft.Component.MSBuild -property installationPath -latest
+        if ([string]::IsNullOrEmpty($vsPath)) {
+          Write-Error "Visual Studio Build Tools not found. Expected VS 2022 (17.x) or VS 2026 (18.x)"
+          exit 1
+        }
+        
+        # Use the amd64 version of MSBuild
+        $msbuildPath = Join-Path $vsPath "MSBuild\Current\Bin\amd64\MSBuild.exe"
+        if (-not (Test-Path $msbuildPath)) {
+          Write-Error "MSBuild not found at $msbuildPath"
+          exit 1
+        }
+        
+        Write-Host "Found MSBuild at: $msbuildPath"
+        echo "MSBUILD_PATH=$msbuildPath" >> $env:GITHUB_OUTPUT
+        echo "MSBUILD_PATH=$msbuildPath" >> $env:GITHUB_ENV
+      shell: pwsh
       
     - name: Restore NuGet packages
       run: dotnet restore ${{ env.SOLUTION_FILE_PATH }}
@@ -83,7 +102,7 @@ jobs:
       
     - name: Build MSIX package
       run: |
-        msbuild ${{ env.PROJECT_PATH }} `
+        & "$env:MSBUILD_PATH" ${{ env.PROJECT_PATH }} `
           /p:Configuration=${{ env.CONFIGURATION }} `
           /p:Platform=${{ env.PLATFORM }} `
           /p:PublishTrimmed=false `
@@ -122,7 +141,7 @@ jobs:
 
   package:
     name: Create Package
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [bump-version, build]
     
     steps:
@@ -152,7 +171,7 @@ jobs:
 
   release:
     name: Create Release
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [bump-version, package]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
