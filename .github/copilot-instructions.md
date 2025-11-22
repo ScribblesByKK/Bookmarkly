@@ -93,7 +93,6 @@ See `.github/workflows/msix-build-release.yml` for the complete MSBuild command 
 
 **Run architecture tests**:
 ```bash
-cd /home/runner/work/Bookmarkly/Bookmarkly
 dotnet test Tests/ArchitectureTests/ArchitectureTests.csproj --configuration Release
 ```
 
