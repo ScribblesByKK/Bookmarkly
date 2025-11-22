@@ -69,10 +69,11 @@ jobs:
           exit 1
         }
         
-        # Find VS 2026 (version 18.x) installation path
-        $vsPath = & $vswherePath -version "[18.0,19.0)" -products * -requires Microsoft.Component.MSBuild -property installationPath -latest
+        # Find VS Build Tools installation (VS 2022 17.x or VS 2026 18.x)
+        # Using -latest to get the newest version installed
+        $vsPath = & $vswherePath -version "[17.0,19.0)" -products * -requires Microsoft.Component.MSBuild -property installationPath -latest
         if ([string]::IsNullOrEmpty($vsPath)) {
-          Write-Error "Visual Studio 2026 Build Tools not found"
+          Write-Error "Visual Studio Build Tools not found. Expected VS 2022 (17.x) or VS 2026 (18.x)"
           exit 1
         }
         
