@@ -35,7 +35,7 @@ jobs:
       id: version
       run: |
         ./build/update-version.ps1
-      shell: pwsh
+      shell: powershell
       
     - name: Commit version changes
       if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci')
@@ -45,7 +45,7 @@ jobs:
         git add build/version.json Bookmarkly.App/Package.appxmanifest
         git diff --staged --quiet || git commit -m "chore: update version to ${{ steps.version.outputs.version }} [skip ci]"
         git push
-      shell: pwsh
+      shell: powershell
 
   build:
     name: Build Solution
@@ -88,7 +88,7 @@ jobs:
         Write-Host "Found MSBuild at: $msbuildPath"
         echo "MSBUILD_PATH=$msbuildPath" >> $env:GITHUB_OUTPUT
         echo "MSBUILD_PATH=$msbuildPath" >> $env:GITHUB_ENV
-      shell: pwsh
+      shell: powershell
       
     - name: Restore NuGet packages
       run: dotnet restore ${{ env.SOLUTION_FILE_PATH }}
@@ -99,7 +99,7 @@ jobs:
         $password = ConvertTo-SecureString -String "${{ secrets.CERT_PASSWORD || 'TempPassword123!' }}" -Force -AsPlainText
         Export-PfxCertificate -Cert "Cert:\CurrentUser\My\$($cert.Thumbprint)" -FilePath GitHubActionsWorkflow.pfx -Password $password
         echo "Certificate created successfully"
-      shell: pwsh
+      shell: powershell
       
     - name: Build MSIX package
       run: |
@@ -117,11 +117,11 @@ jobs:
           /t:_GenerateAppxPackage `
           /restore `
           /bl:msbuild.binlog
-      shell: pwsh
+      shell: powershell
       
     - name: Remove certificate file
       run: Remove-Item -Path GitHubActionsWorkflow.pfx -Force
-      shell: pwsh
+      shell: powershell
       if: always()
       
     - name: Upload build binary log
@@ -160,7 +160,7 @@ jobs:
         }
         Compress-Archive -Path "AppPackages\*" -DestinationPath $zipName -Force
         Write-Host "Created zip: $zipName"
-      shell: pwsh
+      shell: powershell
       
     - name: Upload package artifact
       uses: actions/upload-artifact@v5
