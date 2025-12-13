@@ -3,6 +3,8 @@
 		<!-- Common properties for all projects -->
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<!-- Enable cross-platform Windows targeting for CI builds -->
+		<EnableWindowsTargeting>true</EnableWindowsTargeting>
 	</PropertyGroup>
 
 	<!-- Properties for Windows projects -->

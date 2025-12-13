@@ -15,11 +15,12 @@
     <Project Path="Instapaper/Instapaper.Library/Instapaper.Library.csproj" Id="71f0f60b-6586-4c29-b8ed-6142d2d3ae64" />
   </Folder>
   <Folder Name="/_Items/">
-    <File Path="Directory.Build.Props" />
-    <File Path="Directory.Packages.Props" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
   </Folder>
   <Folder Name="/_Tests/">
     <Project Path="Tests/ArchitectureTests/ArchitectureTests.csproj" Id="edef401a-ef1f-4d1f-ad39-835e698c835c" />
+    <Project Path="Tests/ClusterArchTestsBase/ClusterArchTestsBase.csproj" Id="a1b2c3d4-e5f6-7890-abcd-ef1234567890" />
   </Folder>
   <Project Path="Bookmarkly.App/Bookmarkly.App.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
