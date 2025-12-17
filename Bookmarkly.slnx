@@ -9,8 +9,7 @@
     <Project Path="Bookmarkly.Entities.Abstractions/Bookmarkly.Entities.Abstractions.csproj" Id="e4291e74-0bda-4ae8-a52a-b1d7f4763e94" />
     <Project Path="Bookmarkly.Library.Abstractions/Bookmarkly.Library.Abstractions.csproj" Id="2e38b811-5f56-4002-bbc3-f7c975ba3ff6" />
   </Folder>
-  <Folder Name="/Implementations/" />
-  <Folder Name="/Implementations/Instapaper/">
+  <Folder Name="/Instapaper/">
     <Project Path="Instapaper/Instapaper.Entities/Instapaper.Entities.csproj" Id="937bc212-0322-4714-890d-23a112f5b380" />
     <Project Path="Instapaper/Instapaper.Library/Instapaper.Library.csproj" Id="71f0f60b-6586-4c29-b8ed-6142d2d3ae64" />
   </Folder>
@@ -29,4 +28,5 @@
   </Project>
   <Project Path="Bookmarkly.ViewModels/Bookmarkly.ViewModels.csproj" Id="01597b2f-54eb-40f5-9beb-d67310103cdd" />
   <Project Path="Bookmarkly.Views/Bookmarkly.Views.csproj" Id="c92089a8-1b8c-43b3-bf4c-4ef7cca44160" />
+  <Project Path="Megakat/Megakat.Utilities/Megakat.Utilities.csproj" Id="31ac9525-bf81-4520-8a64-4325015a99fe" />
 </Solution>

@@ -5,4 +5,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Bookmarkly.Entities.Abstractions\Bookmarkly.Entities.Abstractions.csproj" />
     </ItemGroup>
+    <ItemGroup>
+      <Using Include="Bookmarkly.Entities.Abstractions" />
+    </ItemGroup>
 </Project>
