@@ -3,6 +3,10 @@
         <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
+        <!-- Expose internals to architecture tests -->
+        <InternalsVisibleTo Include="ArchitectureTests" />
+    </ItemGroup>
+    <ItemGroup>
         <ProjectReference Include="..\Bookmarkly.Abstractions\Bookmarkly.Views.Abstractions.csproj" />
         <ProjectReference Include="..\Bookmarkly.Entities.Abstractions\Bookmarkly.Entities.Abstractions.csproj" />
         <ProjectReference Include="..\Bookmarkly.Library.Abstractions\Bookmarkly.Library.Abstractions.csproj" />

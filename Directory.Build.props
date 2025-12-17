@@ -3,10 +3,12 @@
 		<!-- Common properties for all projects -->
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<!-- Enable cross-platform Windows targeting for CI builds -->
+		<EnableWindowsTargeting>true</EnableWindowsTargeting>
 	</PropertyGroup>
 
 	<!-- Properties for Windows projects -->
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.22000.0'">
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.22621.0'">
 		<TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
 		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
 	</PropertyGroup>

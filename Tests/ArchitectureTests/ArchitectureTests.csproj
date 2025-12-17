@@ -16,4 +16,14 @@
         <PackageReference Include="TngTech.ArchUnitNET" />
         <PackageReference Include="TngTech.ArchUnitNET.MSTestV2" />
     </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ClusterArchTestsBase\ClusterArchTestsBase.csproj" />
+        <ProjectReference Include="..\..\Bookmarkly.Entities.Abstractions\Bookmarkly.Entities.Abstractions.csproj" />
+        <ProjectReference Include="..\..\Bookmarkly.Library.Abstractions\Bookmarkly.Library.Abstractions.csproj" />
+        <ProjectReference Include="..\..\Bookmarkly.Abstractions\Bookmarkly.Views.Abstractions.csproj" />
+        <ProjectReference Include="..\..\Bookmarkly.ViewModels\Bookmarkly.ViewModels.csproj" />
+        <!-- Note: Bookmarkly.Views is excluded because it requires Windows to build -->
+        <!-- Full architecture validation including Views should run on Windows CI -->
+    </ItemGroup>
 </Project>
