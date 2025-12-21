@@ -115,8 +115,17 @@ The deployment creates the following structure on Cloudflare Pages:
 ├── assets/
 │   └── app-icon.png    # Application icon
 └── downloads/
-    └── Bookmarkly_<version>.zip  # Release archive
+    ├── Bookmarkly_<version>.zip           # Release archive
+    ├── Bookmarkly.App_<version>_Test/     # MSIX bundle folder
+    │   ├── Bookmarkly.App_<version>.msixbundle  # App Installer compatible
+    │   ├── Bookmarkly.App_<version>.cer   # Certificate file
+    │   └── Dependencies/                   # Runtime dependencies
+    └── ...
 ```
+
+Users can install using:
+- **App Installer**: Direct installation via the `.msixbundle` file
+- **ZIP Archive**: Manual installation with all files included
 
 ## Custom Domain (Optional)
 
