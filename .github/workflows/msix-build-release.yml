@@ -201,18 +201,26 @@ jobs:
         # Copy the release zip to downloads
         cp package/Bookmarkly_${{ needs.bump-version.outputs.version }}.zip deploy/downloads/
         
-        # Get release notes from recent commits
-        RELEASE_NOTES=$(git log --pretty=format:'<div class="release-item"><h3>%s</h3><p class="date">%ad</p><ul><li>%b</li></ul></div>' --date=short -10 2>/dev/null | head -c 5000 || echo '<div class="release-item"><h3>Release v${{ needs.bump-version.outputs.version }}</h3><p class="date">'$(date +%Y-%m-%d)'</p><ul><li>Latest release</li></ul></div>')
+        # Get release notes from recent commits (only include subject, skip empty bodies)
+        RELEASE_NOTES=""
+        while IFS= read -r line; do
+          if [ -n "$line" ]; then
+            RELEASE_NOTES="${RELEASE_NOTES}${line}"
+          fi
+        done < <(git log --pretty=format:'<div class="release-item"><h3>%s</h3><p class="date">%ad</p></div>' --date=short -10 2>/dev/null)
         
         # If release notes are empty, provide default
         if [ -z "$RELEASE_NOTES" ]; then
-          RELEASE_NOTES='<div class="release-item"><h3>Release v${{ needs.bump-version.outputs.version }}</h3><p class="date">'$(date +%Y-%m-%d)'</p><ul><li>Latest release with improvements and bug fixes</li></ul></div>'
+          RELEASE_NOTES='<div class="release-item"><h3>Release v${{ needs.bump-version.outputs.version }}</h3><p class="date">'$(date +%Y-%m-%d)'</p></div>'
         fi
+        
+        # Truncate commit SHA to 8 characters for display
+        SHORT_SHA="${{ github.sha }}"
+        SHORT_SHA="${SHORT_SHA:0:8}"
         
         # Replace placeholders in index.html
         sed -i "s|{{VERSION}}|v${{ needs.bump-version.outputs.version }}|g" deploy/index.html
-        sed -i "s|{{COMMIT_SHA}}|${{ github.sha }}|g" deploy/index.html
-        sed -i "s|{{INSTALLER_URL}}|./downloads/Bookmarkly_${{ needs.bump-version.outputs.version }}.zip|g" deploy/index.html
+        sed -i "s|{{COMMIT_SHA}}|${SHORT_SHA}|g" deploy/index.html
         sed -i "s|{{ZIP_URL}}|./downloads/Bookmarkly_${{ needs.bump-version.outputs.version }}.zip|g" deploy/index.html
         
         # Create a temporary file with release notes and use it for replacement
