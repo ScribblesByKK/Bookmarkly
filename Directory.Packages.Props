@@ -4,8 +4,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="coverlet.msbuild" Version="6.0.2" />
+    <PackageVersion Include="Microsoft.ML.OnnxRuntime" Version="1.16.3" />
+    <PackageVersion Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.16.3" />
     <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.8.251003001" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.6584" />
+    <PackageVersion Include="NAudio" Version="2.2.1" />
     <PackageVersion Include="TngTech.ArchUnitNET" Version="0.12.3" />
     <PackageVersion Include="TngTech.ArchUnitNET.MSTestV2" Version="0.12.3" />
   </ItemGroup>

@@ -20,6 +20,15 @@
   <Folder Name="/_Tests/">
     <Project Path="Tests/ArchitectureTests/ArchitectureTests.csproj" Id="edef401a-ef1f-4d1f-ad39-835e698c835c" />
   </Folder>
+  <Folder Name="/Transcription/">
+    <Project Path="Bookmarkly.Transcription.Abstractions/Bookmarkly.Transcription.Abstractions.csproj" />
+    <Project Path="Bookmarkly.Transcription/Bookmarkly.Transcription.csproj" />
+    <Project Path="Bookmarkly.Transcription.Server/Bookmarkly.Transcription.Server.csproj">
+      <Platform Solution="*|ARM64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+  </Folder>
   <Project Path="Bookmarkly.App/Bookmarkly.App.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />
@@ -28,5 +37,4 @@
   </Project>
   <Project Path="Bookmarkly.ViewModels/Bookmarkly.ViewModels.csproj" Id="01597b2f-54eb-40f5-9beb-d67310103cdd" />
   <Project Path="Bookmarkly.Views/Bookmarkly.Views.csproj" Id="c92089a8-1b8c-43b3-bf4c-4ef7cca44160" />
-  <Project Path="Megakat/Megakat.Utilities/Megakat.Utilities.csproj" />
 </Solution>

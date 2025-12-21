@@ -4,8 +4,9 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap rescap">
+  IgnorableNamespaces="uap uap5 rescap">
 
   <Identity
     Name="f2f093fb-2af3-4a7d-9100-613ffeb5769c"
@@ -42,6 +43,17 @@
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
+      <Extensions>
+        <uap5:Extension Category="windows.activatableClass.outOfProcessServer">
+          <uap5:OutOfProcessServer ServerName="Bookmarkly.Transcription.Server"
+                                   uap5:IdentityType="activateAsPackage"
+                                   uap5:RunFullTrust="true">
+            <uap5:Path>Bookmarkly.Transcription.Server\Bookmarkly.Transcription.Server.exe</uap5:Path>
+            <uap5:Instancing>singleInstance</uap5:Instancing>
+            <uap5:ActivatableClass ActivatableClassId="Bookmarkly.Transcription.TranscriptionService" />
+          </uap5:OutOfProcessServer>
+        </uap5:Extension>
+      </Extensions>
     </Application>
   </Applications>
 
