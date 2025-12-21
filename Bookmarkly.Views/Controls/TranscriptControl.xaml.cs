@@ -19,10 +19,12 @@ public sealed partial class TranscriptControl : UserControl, INotifyPropertyChan
     private bool _isTranscribing;
     private string _selectedLanguage = "en";
     private string _fileDisplayText = "Drop audio file here or click Browse";
+    private readonly TranscriptionService _transcriptionService;
 
     public TranscriptControl()
     {
         InitializeComponent();
+        _transcriptionService = new TranscriptionService();
         LoadLanguagesAsync();
     }
 
@@ -265,9 +267,8 @@ public sealed partial class TranscriptControl : UserControl, INotifyPropertyChan
     {
         try
         {
-            // Try to get languages from service
-            var service = new TranscriptionService();
-            var languages = await service.GetSupportedLanguagesAsync();
+            // Get languages from service
+            var languages = await _transcriptionService.GetSupportedLanguagesAsync();
 
             // Map languages to codes
             var languageMap = new[]
@@ -316,11 +317,8 @@ public sealed partial class TranscriptControl : UserControl, INotifyPropertyChan
 
         try
         {
-            // Connect to transcription service
-            var service = new TranscriptionService();
-            
-            // Transcribe with selected language
-            var result = await service.TranscribeWithLanguageAsync(file, SelectedLanguage);
+            // Transcribe with selected language using the shared service instance
+            var result = await _transcriptionService.TranscribeWithLanguageAsync(file, SelectedLanguage);
             
             Transcript = result;
         }

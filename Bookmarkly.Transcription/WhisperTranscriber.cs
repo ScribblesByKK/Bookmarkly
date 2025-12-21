@@ -116,10 +116,12 @@ public class WhisperTranscriber : IDisposable
                 var dims = new[] { 1, 80, melSpectrogram.GetLength(1) };
                 var inputTensor = new DenseTensor<float>(dims);
                 
-                // Copy mel spectrogram to tensor
-                for (int i = 0; i < dims[1]; i++)
+                // Copy mel spectrogram to tensor efficiently
+                int melBins = dims[1];
+                int timeSteps = dims[2];
+                for (int i = 0; i < melBins; i++)
                 {
-                    for (int j = 0; j < dims[2]; j++)
+                    for (int j = 0; j < timeSteps; j++)
                     {
                         inputTensor[0, i, j] = melSpectrogram[i, j];
                     }

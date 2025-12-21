@@ -34,7 +34,10 @@ public class AudioProcessor
                     ResamplerQuality = 60
                 };
 
-                var samples = new List<float>();
+                // Estimate capacity based on duration
+                long estimatedSamples = (long)(reader.TotalTime.TotalSeconds * SampleRate);
+                var samples = new List<float>((int)Math.Min(estimatedSamples, int.MaxValue));
+                
                 var buffer = new float[8192];
                 int read;
                 

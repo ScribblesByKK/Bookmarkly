@@ -167,7 +167,21 @@ file class VectorWrapper<T> : IVector<T>
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => _list.GetEnumerator();
     public void RemoveAtEnd() => _list.RemoveAt(_list.Count - 1);
     public void Append(T item) => _list.Add(item);
-    public void GetMany(uint startIndex, T[] items) => _list.CopyTo((int)startIndex, items, 0, items.Length);
+    public void GetMany(uint startIndex, T[] items)
+    {
+        if (items == null)
+            throw new ArgumentNullException(nameof(items));
+        
+        int start = (int)startIndex;
+        if (start < 0 || start >= _list.Count)
+            throw new ArgumentOutOfRangeException(nameof(startIndex));
+        
+        int count = Math.Min(items.Length, _list.Count - start);
+        for (int i = 0; i < count; i++)
+        {
+            items[i] = _list[start + i];
+        }
+    }
     public void ReplaceAll(T[] items)
     {
         _list.Clear();

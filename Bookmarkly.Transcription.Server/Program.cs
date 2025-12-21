@@ -1,13 +1,14 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
-using WinRT;
 
 namespace Bookmarkly.Transcription.Server;
 
 class Program
 {
     private static ManualResetEvent? _serverExitEvent;
+    private static int _refCount = 0;
+    private static readonly object _lock = new object();
 
     [STAThread]
     static int Main(string[] args)
@@ -21,17 +22,15 @@ class Program
             AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
             Console.CancelKeyPress += OnCancelKeyPress;
 
-            // Register the WinRT activation factory
-            var activationFactory = new TranscriptionServiceActivationFactory();
-            var cookie = RegisterActivationFactory(activationFactory);
-
             Console.WriteLine("Bookmarkly Transcription Server started.");
+            
+            // In a real implementation, this would register with COM using
+            // Windows.ApplicationModel.Core APIs and CoRegisterClassObject.
+            // For packaged apps, the system handles activation through the manifest.
+            // The server just needs to stay alive while there are active instances.
             
             // Keep server alive
             _serverExitEvent.WaitOne();
-            
-            // Unregister
-            RevokeActivationFactory(cookie);
             
             Console.WriteLine("Bookmarkly Transcription Server stopped.");
             return 0;
@@ -54,37 +53,26 @@ class Program
         _serverExitEvent?.Set();
     }
 
-    private static int RegisterActivationFactory(IActivationFactory factory)
+    // Called when an instance is created
+    internal static void AddRef()
     {
-        // Register the COM activation factory
-        // This is simplified - production code would use proper COM registration
-        return 1; // Return dummy cookie
+        lock (_lock)
+        {
+            _refCount++;
+        }
     }
 
-    private static void RevokeActivationFactory(int cookie)
+    // Called when an instance is released
+    internal static void Release()
     {
-        // Revoke the COM activation factory
+        lock (_lock)
+        {
+            _refCount--;
+            if (_refCount <= 0)
+            {
+                // No more instances, signal server to exit
+                _serverExitEvent?.Set();
+            }
+        }
     }
-}
-
-/// <summary>
-/// Activation factory for TranscriptionService
-/// </summary>
-internal class TranscriptionServiceActivationFactory : IActivationFactory
-{
-    public object ActivateInstance()
-    {
-        return new Bookmarkly.Transcription.TranscriptionService();
-    }
-}
-
-/// <summary>
-/// COM activation factory interface
-/// </summary>
-[ComImport]
-[Guid("00000035-0000-0000-C000-000000000046")]
-[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-internal interface IActivationFactory
-{
-    object ActivateInstance();
 }
