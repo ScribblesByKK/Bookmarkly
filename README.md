@@ -36,6 +36,10 @@ For more detailed setup and contribution guidelines, see [CONTRIBUTING.md](CONTR
 
 The project requires Windows for building the full application. See the [build workflow](.github/workflows/msix-build-release.yml) for details.
 
+### Deployment
+
+Releases are automatically deployed to Cloudflare Pages CDN with a landing page. See [Cloudflare CDN Setup](docs/CLOUDFLARE_CDN_SETUP.md) for configuration instructions.
+
 ### Testing
 
 Tests can be run on any platform:
