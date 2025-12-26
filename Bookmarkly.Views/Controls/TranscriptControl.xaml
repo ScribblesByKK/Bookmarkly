@@ -1,0 +1,181 @@
+<UserControl
+    x:Class="Bookmarkly.Views.Controls.TranscriptControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="600"
+    d:DesignWidth="800">
+
+    <UserControl.Resources>
+        <!-- Shimmer animation -->
+        <Storyboard x:Name="ShimmerStoryboard" RepeatBehavior="Forever">
+            <DoubleAnimation
+                Storyboard.TargetName="ShimmerTranslate"
+                Storyboard.TargetProperty="X"
+                From="-400"
+                To="800"
+                Duration="0:0:2"
+                AutoReverse="False" />
+        </Storyboard>
+
+        <!-- Shimmer brush -->
+        <LinearGradientBrush x:Key="ShimmerBrush" StartPoint="0,0" EndPoint="1,0">
+            <LinearGradientBrush.Transform>
+                <TranslateTransform x:Name="ShimmerTranslate" X="-400" />
+            </LinearGradientBrush.Transform>
+            <GradientStop Color="#F0F0F0" Offset="0" />
+            <GradientStop Color="#E0E0E0" Offset="0.4" />
+            <GradientStop Color="#F0F0F0" Offset="0.6" />
+            <GradientStop Color="#F0F0F0" Offset="1" />
+        </LinearGradientBrush>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Top toolbar -->
+        <Grid Grid.Row="0" Padding="16,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Language picker -->
+            <ComboBox
+                x:Name="LanguageComboBox"
+                Grid.Column="1"
+                Width="200"
+                Margin="0,0,8,0"
+                SelectedIndex="0"
+                SelectionChanged="LanguageComboBox_SelectionChanged" />
+
+            <!-- Copy button -->
+            <Button
+                x:Name="CopyButton"
+                Grid.Column="2"
+                Click="CopyButton_Click"
+                IsEnabled="{x:Bind HasTranscript, Mode=OneWay}"
+                ToolTipService.ToolTip="Copy transcript to clipboard">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE8C8;" FontSize="16" />
+                    <TextBlock Text="Copy" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- File input area -->
+        <Grid
+            Grid.Row="1"
+            Padding="16"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Margin="16,0,16,8"
+            AllowDrop="True"
+            DragOver="FileArea_DragOver"
+            Drop="FileArea_Drop">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock
+                x:Name="FileNameText"
+                Grid.Column="0"
+                Text="{x:Bind FileDisplayText, Mode=OneWay}"
+                VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+            <Button
+                Grid.Column="1"
+                Content="Browse"
+                Click="BrowseButton_Click"
+                Margin="8,0,0,0" />
+        </Grid>
+
+        <!-- Transcript area -->
+        <Grid Grid.Row="2" Margin="16,0,16,16">
+            <Border
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16">
+
+                <!-- Shimmer loading effect -->
+                <StackPanel
+                    x:Name="ShimmerPanel"
+                    Visibility="{x:Bind IsTranscribing, Mode=OneWay}"
+                    Spacing="12">
+                    <Rectangle
+                        Height="20"
+                        Fill="{StaticResource ShimmerBrush}"
+                        RadiusX="4"
+                        RadiusY="4"
+                        Opacity="0.6" />
+                    <Rectangle
+                        Height="20"
+                        Width="80%"
+                        HorizontalAlignment="Left"
+                        Fill="{StaticResource ShimmerBrush}"
+                        RadiusX="4"
+                        RadiusY="4"
+                        Opacity="0.6" />
+                    <Rectangle
+                        Height="20"
+                        Width="90%"
+                        HorizontalAlignment="Left"
+                        Fill="{StaticResource ShimmerBrush}"
+                        RadiusX="4"
+                        RadiusY="4"
+                        Opacity="0.6" />
+                    <Rectangle
+                        Height="20"
+                        Width="75%"
+                        HorizontalAlignment="Left"
+                        Fill="{StaticResource ShimmerBrush}"
+                        RadiusX="4"
+                        RadiusY="4"
+                        Opacity="0.6" />
+                    <Rectangle
+                        Height="20"
+                        Width="85%"
+                        HorizontalAlignment="Left"
+                        Fill="{StaticResource ShimmerBrush}"
+                        RadiusX="4"
+                        RadiusY="4"
+                        Opacity="0.6" />
+                </StackPanel>
+
+                <!-- Transcript text -->
+                <ScrollViewer
+                    x:Name="TranscriptScroller"
+                    Visibility="{x:Bind IsNotTranscribing, Mode=OneWay}">
+                    <TextBlock
+                        x:Name="TranscriptText"
+                        Text="{x:Bind Transcript, Mode=OneWay}"
+                        TextWrapping="Wrap"
+                        IsTextSelectionEnabled="True"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- Error message -->
+        <InfoBar
+            x:Name="ErrorInfoBar"
+            Grid.Row="2"
+            Severity="Error"
+            IsOpen="False"
+            Margin="16"
+            VerticalAlignment="Bottom" />
+    </Grid>
+</UserControl>

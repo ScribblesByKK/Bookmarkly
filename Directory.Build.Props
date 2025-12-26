@@ -3,6 +3,7 @@
 		<!-- Common properties for all projects -->
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<EnableWindowsTargeting>true</EnableWindowsTargeting>
 	</PropertyGroup>
 
 	<!-- Properties for Windows projects -->

@@ -8,6 +8,7 @@
         <PublishProfile>win-$(Platform).pubxml</PublishProfile>
         <UseWinUI>true</UseWinUI>
         <EnableMsixTooling>true</EnableMsixTooling>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
     </PropertyGroup>
 
     <ItemGroup>
@@ -34,6 +35,10 @@
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.WindowsAppSDK" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Bookmarkly.Transcription.Server\Bookmarkly.Transcription.Server.csproj" />
     </ItemGroup>
 
     <!--

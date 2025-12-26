@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+        <RootNamespace>Bookmarkly.Transcription.Server</RootNamespace>
+        <Platforms>x86;x64;ARM64</Platforms>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <CsWinRTEnabled>true</CsWinRTEnabled>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Bookmarkly.Transcription.Abstractions\Bookmarkly.Transcription.Abstractions.csproj" />
+        <ProjectReference Include="..\Bookmarkly.Transcription\Bookmarkly.Transcription.csproj" />
+    </ItemGroup>
+</Project>

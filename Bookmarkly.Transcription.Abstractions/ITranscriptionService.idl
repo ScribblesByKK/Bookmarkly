@@ -1,0 +1,15 @@
+namespace Bookmarkly.Transcription
+{
+    [default_interface]
+    runtimeclass TranscriptionService : ITranscriptionService
+    {
+        TranscriptionService();
+    }
+
+    interface ITranscriptionService
+    {
+        Windows.Foundation.IAsyncOperation<String> TranscribeAsync(Windows.Storage.StorageFile audioFile);
+        Windows.Foundation.IAsyncOperation<String> TranscribeWithLanguageAsync(Windows.Storage.StorageFile audioFile, String languageCode);
+        Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVector<String> > GetSupportedLanguagesAsync();
+    }
+}
