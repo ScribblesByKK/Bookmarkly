@@ -245,7 +245,10 @@ jobs:
         
     - name: Deploy to Cloudflare Pages
       uses: cloudflare/wrangler-action@v3
+      env:
+        CLOUDFLARE_PROJECT: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+        DEPLOY_BRANCH: ${{ github.ref_name }}
       with:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        command: pages deploy deploy --project-name='${{ secrets.CLOUDFLARE_PROJECT_NAME }}' --branch='${{ github.ref_name }}'
+        command: pages deploy deploy --project-name="$CLOUDFLARE_PROJECT" --branch="$DEPLOY_BRANCH"
