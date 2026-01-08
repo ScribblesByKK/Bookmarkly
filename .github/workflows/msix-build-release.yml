@@ -259,11 +259,8 @@ jobs:
       shell: bash
         
     - name: Deploy to Cloudflare Pages
-      uses: cloudflare/pages-action@v1
+      uses: cloudflare/wrangler-action@v3
       with:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        projectName: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
-        directory: deploy
-        gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ github.ref_name }}
+        command: pages deploy ./deploy --project-name=${{ secrets.CLOUDFLARE_PROJECT_NAME }} --branch=${{ github.ref_name }}
