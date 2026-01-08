@@ -102,7 +102,13 @@ jobs:
       shell: pwsh
       
     - name: Remove certificate file
-      run: Remove-Item -Path GitHubActionsWorkflow.pfx -Force
+      run: |
+        if (Test-Path -Path GitHubActionsWorkflow.pfx) {
+          Remove-Item -Path GitHubActionsWorkflow.pfx -Force
+          Write-Host "Certificate file removed successfully"
+        } else {
+          Write-Host "Certificate file not found, skipping removal"
+        }
       shell: pwsh
       if: always()
       
