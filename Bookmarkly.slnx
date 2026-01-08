@@ -28,5 +28,4 @@
   </Project>
   <Project Path="Bookmarkly.ViewModels/Bookmarkly.ViewModels.csproj" Id="01597b2f-54eb-40f5-9beb-d67310103cdd" />
   <Project Path="Bookmarkly.Views/Bookmarkly.Views.csproj" Id="c92089a8-1b8c-43b3-bf4c-4ef7cca44160" />
-  <Project Path="Megakat/Megakat.Utilities/Megakat.Utilities.csproj" />
 </Solution>
