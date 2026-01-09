@@ -5,6 +5,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      token: "${{ secrets.DEPENDABOT_TOKEN }}"
       day: "monday"
     # Group all NuGet package updates into a single pull request
     groups:
