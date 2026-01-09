@@ -152,6 +152,7 @@ jobs:
         } else {
           Write-Host "No .appinstaller file found, creating placeholder"
           # Create a placeholder appinstaller file if not found
+          # Note: Update the domain if deployment location changes
           $version = "${{ needs.bump-version.outputs.version }}"
           $content = @"
         <?xml version="1.0" encoding="utf-8"?>
@@ -292,7 +293,8 @@ jobs:
               if [ -n "$OLDER_TAG" ] && [ "$OLDER_TAG" != "$TAG" ]; then
                 COMMITS=$(git log --pretty=format:"%s" "$OLDER_TAG".."$TAG" 2>/dev/null)
               else
-                # Only one tag or no older tag, get commits up to this tag (limit to 20)
+                # Only one tag or no older tag, get last 20 commits for initial release
+                # Limit of 20 provides reasonable context without overwhelming the changelog
                 COMMITS=$(git log --pretty=format:"%s" -20 "$TAG" 2>/dev/null)
               fi
             fi
