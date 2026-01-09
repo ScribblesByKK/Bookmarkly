@@ -142,11 +142,43 @@ jobs:
         Write-Host "Created zip: $zipName"
       shell: pwsh
       
+    - name: Find and copy appinstaller file
+      run: |
+        # Find the .appinstaller file in the AppPackages directory
+        $appInstallerFile = Get-ChildItem -Path "AppPackages" -Filter "*.appinstaller" -Recurse | Select-Object -First 1
+        if ($appInstallerFile) {
+          Copy-Item -Path $appInstallerFile.FullName -Destination "Bookmarkly.appinstaller"
+          Write-Host "Found and copied appinstaller: $($appInstallerFile.FullName)"
+        } else {
+          Write-Host "No .appinstaller file found, creating placeholder"
+          # Create a placeholder appinstaller file if not found
+          # Note: Update the domain if deployment location changes
+          $version = "${{ needs.bump-version.outputs.version }}"
+          $content = @"
+        <?xml version="1.0" encoding="utf-8"?>
+        <AppInstaller Uri="https://bookmarkly.pages.dev/downloads/Bookmarkly.appinstaller" Version="$version">
+          <MainBundle Name="Bookmarkly" Version="$version" Publisher="CN=Bookmarkly" Uri="https://bookmarkly.pages.dev/downloads/Bookmarkly.zip"/>
+          <UpdateSettings>
+            <OnLaunch HoursBetweenUpdateChecks="0"/>
+          </UpdateSettings>
+        </AppInstaller>
+        "@
+          $content | Out-File -FilePath "Bookmarkly.appinstaller" -Encoding utf8
+        }
+      shell: pwsh
+      
     - name: Upload package artifact
       uses: actions/upload-artifact@v5
       with:
         name: Bookmarkly_${{ needs.bump-version.outputs.version }}
         path: Bookmarkly_${{ needs.bump-version.outputs.version }}.zip
+        if-no-files-found: error
+        
+    - name: Upload appinstaller artifact
+      uses: actions/upload-artifact@v5
+      with:
+        name: Bookmarkly_appinstaller
+        path: Bookmarkly.appinstaller
         if-no-files-found: error
 
   release:
@@ -193,6 +225,12 @@ jobs:
         name: Bookmarkly_${{ needs.bump-version.outputs.version }}
         path: ./package
         
+    - name: Download appinstaller artifact
+      uses: actions/download-artifact@v5
+      with:
+        name: Bookmarkly_appinstaller
+        path: ./package
+        
     - name: Prepare landing page
       run: |
         # Create deployment directory
@@ -204,34 +242,123 @@ jobs:
         # Copy app icon
         cp Bookmarkly.App/Assets/StoreLogo.png deploy/assets/app-icon.png
         
-        # Copy the release ZIP to downloads
-        cp package/Bookmarkly_${{ needs.bump-version.outputs.version }}.zip deploy/downloads/
+        # Copy the release ZIP and appinstaller to downloads with standardized names
+        cp package/Bookmarkly_${{ needs.bump-version.outputs.version }}.zip deploy/downloads/Bookmarkly.zip
+        cp package/Bookmarkly.appinstaller deploy/downloads/Bookmarkly.appinstaller
         
         # Calculate SHA256 hash of the ZIP file
         ZIP_SHA256=$(sha256sum package/Bookmarkly_${{ needs.bump-version.outputs.version }}.zip | cut -d ' ' -f 1)
         SHORT_ZIP_SHA="${ZIP_SHA256:0:16}"
         
-        # Use ZIP file URL for both download and app installer
-        ZIP_URL="./downloads/Bookmarkly_${{ needs.bump-version.outputs.version }}.zip"
+        # Set URLs for downloads
+        ZIP_URL="./downloads/Bookmarkly.zip"
+        APPINSTALLER_URL="./downloads/Bookmarkly.appinstaller"
         
-        # Get release notes from recent commits (only include subject)
-        RELEASE_NOTES=""
-        while IFS= read -r line; do
-          if [ -n "$line" ]; then
-            RELEASE_NOTES="${RELEASE_NOTES}${line}"
+        # Generate release notes from tags using Conventional Commits
+        generate_release_notes() {
+          local RELEASE_HTML=""
+          local COMMIT_TYPES=("feat" "fix" "refactor" "docs" "style" "perf" "test" "build" "ci")
+          local COMMIT_TYPE_LABELS=("Feat" "Fix" "Refactor" "Docs" "Style" "Perf" "Test" "Build" "CI")
+          
+          # Get up to 10 most recent tags
+          local TAGS=$(git tag --sort=-version:refname | head -10)
+          
+          if [ -z "$TAGS" ]; then
+            echo '<p class="text-gray-600 dark:text-gray-400">No releases found.</p>'
+            return
           fi
-        done < <(git log --pretty=format:'<div class="release-item"><h3>%s</h3><p class="date">%ad</p></div>' --date=short -10 2>/dev/null)
+          
+          local PREV_TAG=""
+          local TAG_COUNT=0
+          
+          while IFS= read -r TAG; do
+            if [ -z "$TAG" ]; then
+              continue
+            fi
+            
+            TAG_COUNT=$((TAG_COUNT + 1))
+            
+            # Get the tag date
+            local TAG_DATE=$(git log -1 --format=%ad --date=short "$TAG" 2>/dev/null || echo "Unknown date")
+            
+            # Get commits between this tag and the previous (older) one
+            # Tags are sorted newest first, so PREV_TAG (if set) is actually newer
+            local COMMITS=""
+            if [ -n "$PREV_TAG" ]; then
+              # PREV_TAG is newer, TAG is older, so get commits: TAG..PREV_TAG
+              COMMITS=$(git log --pretty=format:"%s" "$TAG".."$PREV_TAG" 2>/dev/null)
+            else
+              # This is the newest tag, find the next older tag to get commits for this release
+              local OLDER_TAG=$(git tag --sort=-version:refname | grep -A1 "^${TAG}$" | tail -1)
+              if [ -n "$OLDER_TAG" ] && [ "$OLDER_TAG" != "$TAG" ]; then
+                COMMITS=$(git log --pretty=format:"%s" "$OLDER_TAG".."$TAG" 2>/dev/null)
+              else
+                # Only one tag or no older tag, get last 20 commits for initial release
+                # Limit of 20 provides reasonable context without overwhelming the changelog
+                COMMITS=$(git log --pretty=format:"%s" -20 "$TAG" 2>/dev/null)
+              fi
+            fi
+            
+            # Start building this release's HTML
+            local RELEASE_CONTENT=""
+            local HAS_CONVENTIONAL=false
+            
+            # Group commits by type
+            for i in "${!COMMIT_TYPES[@]}"; do
+              local TYPE="${COMMIT_TYPES[$i]}"
+              local LABEL="${COMMIT_TYPE_LABELS[$i]}"
+              local TYPE_COMMITS=""
+              
+              while IFS= read -r COMMIT; do
+                if [ -z "$COMMIT" ]; then
+                  continue
+                fi
+                
+                # Skip chore commits
+                if [[ "$COMMIT" =~ ^chore(\(.+\))?:.*$ ]]; then
+                  continue
+                fi
+                
+                # Check if commit matches this type
+                if [[ "$COMMIT" =~ ^${TYPE}(\(.+\))?:(.*)$ ]]; then
+                  local MSG="${BASH_REMATCH[2]}"
+                  MSG=$(echo "$MSG" | sed 's/^[[:space:]]*//')
+                  TYPE_COMMITS="${TYPE_COMMITS}<li class=\"text-gray-600 dark:text-gray-400 py-1\">${MSG}</li>"
+                  HAS_CONVENTIONAL=true
+                fi
+              done <<< "$COMMITS"
+              
+              if [ -n "$TYPE_COMMITS" ]; then
+                RELEASE_CONTENT="${RELEASE_CONTENT}<div class=\"mb-3\"><strong class=\"text-gray-900 dark:text-white\">${LABEL}</strong><ul class=\"list-disc list-inside ml-2 mt-1\">${TYPE_COMMITS}</ul></div>"
+              fi
+            done
+            
+            # If no conventional commits found, add a message
+            if [ "$HAS_CONVENTIONAL" = false ]; then
+              RELEASE_CONTENT='<p class="text-gray-500 dark:text-gray-400 italic">No conventional changes for this release.</p>'
+            fi
+            
+            # Build the collapsible release item
+            RELEASE_HTML="${RELEASE_HTML}<details class=\"release-item border-l-4 border-indigo-500 pl-4 py-2\"><summary class=\"font-semibold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded\">Release ${TAG} – ${TAG_DATE}</summary><div class=\"mt-3 pl-2\">${RELEASE_CONTENT}</div></details>"
+            
+            PREV_TAG="$TAG"
+          done <<< "$TAGS"
+          
+          echo "$RELEASE_HTML"
+        }
+        
+        RELEASE_NOTES=$(generate_release_notes)
         
         # If release notes are empty, provide default
         if [ -z "$RELEASE_NOTES" ]; then
-          RELEASE_NOTES='<div class="release-item"><h3>Release v${{ needs.bump-version.outputs.version }}</h3><p class="date">'$(date +%Y-%m-%d)'</p></div>'
+          RELEASE_NOTES='<p class="text-gray-600 dark:text-gray-400">No release notes available.</p>'
         fi
         
         # Replace placeholders in index.html
         sed -i "s|{{VERSION}}|v${{ needs.bump-version.outputs.version }}|g" deploy/index.html
         sed -i "s|{{ZIP_SHA}}|${SHORT_ZIP_SHA}|g" deploy/index.html
         sed -i "s|{{ZIP_URL}}|${ZIP_URL}|g" deploy/index.html
-        sed -i "s|{{APPINSTALLER_URL}}|${ZIP_URL}|g" deploy/index.html
+        sed -i "s|{{APPINSTALLER_URL}}|${APPINSTALLER_URL}|g" deploy/index.html
         
         # Create a temporary file with release notes and use it for replacement
         echo "$RELEASE_NOTES" > /tmp/release_notes.html
