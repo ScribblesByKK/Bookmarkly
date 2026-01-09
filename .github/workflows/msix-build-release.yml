@@ -156,7 +156,7 @@ jobs:
           $content = @"
         <?xml version="1.0" encoding="utf-8"?>
         <AppInstaller Uri="https://bookmarkly.pages.dev/downloads/Bookmarkly.appinstaller" Version="$version">
-          <MainBundle Name="Bookmarkly" Version="$version" Publisher="CN=Bookmarkly" Uri="https://bookmarkly.pages.dev/downloads/Bookmarkly_$version.zip"/>
+          <MainBundle Name="Bookmarkly" Version="$version" Publisher="CN=Bookmarkly" Uri="https://bookmarkly.pages.dev/downloads/Bookmarkly.zip"/>
           <UpdateSettings>
             <OnLaunch HoursBetweenUpdateChecks="0"/>
           </UpdateSettings>
@@ -280,17 +280,19 @@ jobs:
             # Get the tag date
             local TAG_DATE=$(git log -1 --format=%ad --date=short "$TAG" 2>/dev/null || echo "Unknown date")
             
-            # Get commits between this tag and the previous one (or from beginning if no previous)
+            # Get commits between this tag and the previous (older) one
+            # Tags are sorted newest first, so PREV_TAG (if set) is actually newer
             local COMMITS=""
             if [ -n "$PREV_TAG" ]; then
+              # PREV_TAG is newer, TAG is older, so get commits: TAG..PREV_TAG
               COMMITS=$(git log --pretty=format:"%s" "$TAG".."$PREV_TAG" 2>/dev/null)
             else
-              # For the latest tag, get commits from previous tag to this tag
-              local NEXT_TAG=$(git tag --sort=-version:refname | sed -n '2p')
-              if [ -n "$NEXT_TAG" ]; then
-                COMMITS=$(git log --pretty=format:"%s" "$NEXT_TAG".."$TAG" 2>/dev/null)
+              # This is the newest tag, find the next older tag to get commits for this release
+              local OLDER_TAG=$(git tag --sort=-version:refname | grep -A1 "^${TAG}$" | tail -1)
+              if [ -n "$OLDER_TAG" ] && [ "$OLDER_TAG" != "$TAG" ]; then
+                COMMITS=$(git log --pretty=format:"%s" "$OLDER_TAG".."$TAG" 2>/dev/null)
               else
-                # Only one tag, get last 20 commits before this tag
+                # Only one tag or no older tag, get commits up to this tag (limit to 20)
                 COMMITS=$(git log --pretty=format:"%s" -20 "$TAG" 2>/dev/null)
               fi
             fi
