@@ -4,7 +4,7 @@ registries:
     type:  git
     url: https://github.com
     username: x-access-token
-    password: ${{ secrets.GH_PAT }}
+    password: ${{ secrets.DEPENDABOT_PAT }}
 updates:
   # Enable version updates for NuGet packages
   - package-ecosystem: "nuget"
