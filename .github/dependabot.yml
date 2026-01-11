@@ -1,4 +1,10 @@
 version: 2
+registries:
+  github-private:
+    type:  git
+    url: https://github.com
+    username: x-access-token
+    password: ${{ secrets.GH_PAT }}
 updates:
   # Enable version updates for NuGet packages
   - package-ecosystem: "nuget"
