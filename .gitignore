@@ -416,3 +416,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# DocFX build output
+_site/
+api/
+.manifest
