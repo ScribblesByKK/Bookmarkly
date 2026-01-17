@@ -6,7 +6,7 @@
 			"type": "shell",
 			"command": "msbuild",
 			"args": [
-				   "${workspaceFolder}/${config:solutionFile}",
+				"${workspaceFolder}/${config:solutionFile}",
 				"/p:Configuration=${config:dotnet.defaultSolution.configuration}",
 				"/p:Platform=${config:dotnet.defaultSolution.platform}"
 			],
