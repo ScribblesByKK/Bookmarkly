@@ -80,7 +80,8 @@ if (Test-Path $manifestPath) {
     # Use a more specific regex to target only the Identity element's Version attribute
     $manifest = $manifest -replace '(<Identity[^>]*Version=")[^"]+(")', "`${1}$fullVersion`${2}"
     
-    Set-Content $manifestPath $manifest
+    # Use System.IO.File to avoid adding extra newlines
+    [System.IO.File]::WriteAllText($manifestPath, $manifest, [System.Text.Encoding]::UTF8)
     Write-Host "Updated $manifestPath with version $fullVersion"
 } else {
     Write-Warning "Manifest file not found: $manifestPath"
