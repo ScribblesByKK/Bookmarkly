@@ -349,13 +349,13 @@ jobs:
                 fi
               done
               
-              # If no conventional commits found, add a message
+              # If no conventional commits found, add a generic message
               if [ "$HAS_CONVENTIONAL" = false ]; then
-                RELEASE_CONTENT='<p class="text-gray-500 dark:text-gray-400 italic">No conventional changes for this release.</p>'
+                RELEASE_CONTENT='<p class="text-gray-600 dark:text-gray-400">Bug fixes and performance improvements.</p>'
               fi
               
               # Build the collapsible release item
-              RELEASE_HTML="${RELEASE_HTML}<details class=\"release-item border-l-4 border-indigo-500 pl-4 py-2\"><summary class=\"font-semibold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded\">Release ${TAG} – ${TAG_DATE}</summary><div class=\"mt-3 pl-2\">${RELEASE_CONTENT}</div></details>"
+              RELEASE_HTML="${RELEASE_HTML}<details class=\"release-item\"><summary class=\"font-semibold text-gray-900 dark:text-white\">Release ${TAG} <span class=\"text-gray-500 dark:text-gray-400 font-normal\">• ${TAG_DATE}</span></summary><div class=\"release-content\">${RELEASE_CONTENT}</div></details>"
               
               PREV_TAG="$TAG"
             done <<< "$TAGS"
