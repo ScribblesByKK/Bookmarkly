@@ -15,7 +15,7 @@ Thank you for your interest in contributing to Bookmarkly! This guide will help 
 1. **Clone the repository with submodules:**
 
    ```bash
-   git clone --recurse-submodules https://github.com/Kumara-Krishnan/Bookmarkly.git
+   git clone --recurse-submodules https://github.com/ScribblesByKK/Bookmarkly.git
    cd Bookmarkly
    ```
 
