@@ -10,7 +10,7 @@
   <Identity
     Name="f2f093fb-2af3-4a7d-9100-613ffeb5769c"
     Publisher="CN=Bookmarkly-Temp-Cert"
-    Version="1.2605.4.0" />
+    Version="1.2605.5.0" />
 
   <mp:PhoneIdentity PhoneProductId="f2f093fb-2af3-4a7d-9100-613ffeb5769c" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
