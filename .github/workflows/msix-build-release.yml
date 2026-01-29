@@ -6,6 +6,30 @@ on:
     branches:
       - main
       - ci
+  # Run on pull requests for build validation
+  pull_request:
+    branches:
+      - main
+      - ci
+  # Manual workflow dispatch with runner selection
+  workflow_dispatch:
+    inputs:
+      runner_type:
+        description: "Runner type"
+        required: true
+        default: "github"
+        type: choice
+        options:
+          - github
+          - self-hosted
+      target_branch:
+        description: "Target branch (for manual runs)"
+        required: false
+        default: "main"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   SOLUTION_FILE_PATH: Bookmarkly.slnx
@@ -22,7 +46,7 @@ permissions:
 jobs:
   bump-version:
     name: Bump Version
-    runs-on: windows-latest
+    runs-on: ${{ (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted')) && '[self-hosted, windows]' || 'windows-latest' }}
     outputs:
       version: ${{ steps.version.outputs.version }}
 
@@ -30,6 +54,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.target_branch || github.ref_name }}
           token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
           submodules: recursive
@@ -41,7 +66,7 @@ jobs:
         shell: pwsh
 
       - name: Commit version changes
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci')
+        if: github.event_name != 'pull_request' && (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci'))
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -52,14 +77,14 @@ jobs:
 
   build:
     name: Build Solution
-    runs-on: windows-latest
+    runs-on: ${{ (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted')) && '[self-hosted, windows]' || 'windows-latest' }}
     needs: bump-version
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ inputs.target_branch || github.ref_name }}
           token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
           fetch-depth: 1
           submodules: recursive
@@ -135,10 +160,19 @@ jobs:
           path: AppPackages/
           retention-days: 1
 
+      - name: Cleanup build artifacts
+        run: |
+          # Clean obj and bin folders to free up space
+          Get-ChildItem -Path . -Include obj,bin -Recurse -Directory | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+          Write-Host "Build artifacts cleaned"
+        shell: pwsh
+        if: always() && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted'))
+
   package:
     name: Create Package
-    runs-on: windows-latest
+    runs-on: ${{ (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted')) && '[self-hosted, windows]' || 'windows-latest' }}
     needs: [bump-version, build]
+    if: github.event_name != 'pull_request'
 
     steps:
       - name: Download build output
@@ -199,9 +233,9 @@ jobs:
 
   release:
     name: Create Release
-    runs-on: windows-latest
+    runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted') && '[self-hosted, windows]' || 'windows-latest' }}
     needs: [bump-version, package]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci')
+    if: github.event_name != 'pull_request'
     outputs:
       release_url: ${{ steps.create_release.outputs.url }}
 
@@ -225,14 +259,15 @@ jobs:
 
   deploy-to-cloudflare:
     name: Deploy to Cloudflare Pages
-    runs-on: ubuntu-latest
+    runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted') && '[self-hosted, linux]' || 'ubuntu-latest' }}
     needs: [bump-version, package, release]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci')
+    if: github.event_name != 'pull_request'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.target_branch || github.ref_name }}
           fetch-depth: 0
 
       - name: Download package artifact (ZIP)
@@ -390,17 +425,17 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         env:
           CLOUDFLARE_PROJECT: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
-          DEPLOY_BRANCH: ${{ github.ref_name }}
+          DEPLOY_BRANCH: ${{ inputs.target_branch || github.ref_name }}
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy deploy --project-name="${{ secrets.CLOUDFLARE_PROJECT_NAME }}" --branch="${{ github.ref_name }}"
+          command: pages deploy deploy --project-name="${{ secrets.CLOUDFLARE_PROJECT_NAME }}" --branch="${{ inputs.target_branch || github.ref_name }}"
 
   deploy-docs:
     name: Deploy to GitHub Pages
-    runs-on: ubuntu-latest
+    runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted') && '[self-hosted, linux]' || 'ubuntu-latest' }}
     needs: build
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci')
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
