@@ -1,0 +1,440 @@
+name: MSIX Build and Release (Self-Hosted)
+
+on:
+    workflow_dispatch:
+        inputs:
+            target_branch:
+                description: "Target branch to build"
+                required: true
+                default: "main"
+                type: choice
+                options:
+                    - main
+                    - ci
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: false
+
+env:
+    SOLUTION_FILE_PATH: Bookmarkly.slnx
+    PROJECT_PATH: Bookmarkly.App/Bookmarkly.App.csproj
+    CONFIGURATION: Release
+    PLATFORM: x64
+
+permissions:
+    contents: write # Required for creating releases
+    deployments: write # Required for Cloudflare Pages deployment
+    pages: write # Required for GitHub Pages deployment
+    id-token: write # Required for GitHub Pages deployment
+
+jobs:
+    bump-version:
+        name: Bump Version
+        runs-on: [self-hosted, windows]
+        outputs:
+            version: ${{ steps.version.outputs.version }}
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+              with:
+                  ref: ${{ inputs.target_branch }}
+                  token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+                  fetch-depth: 0
+                  submodules: recursive
+
+            - name: Update version
+              id: version
+              run: |
+                  ./build/update-version.ps1
+              shell: pwsh
+
+            - name: Commit version changes
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git add build/version.json Bookmarkly.App/Package.appxmanifest
+                  git diff --staged --quiet || git commit -m "chore: update version to ${{ steps.version.outputs.version }} [skip ci]"
+                  git push
+              shell: pwsh
+
+    build:
+        name: Build Solution
+        runs-on: [self-hosted, windows]
+        needs: bump-version
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+              with:
+                  ref: ${{ inputs.target_branch }}
+                  token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+                  fetch-depth: 1
+                  submodules: recursive
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v5
+              with:
+                  dotnet-version: "10.x"
+
+            - name: Setup MSBuild
+              uses: microsoft/setup-msbuild@v2
+              with:
+                  vs-version: "[17.9,)"
+
+            - name: Setup DocFX
+              run: dotnet tool update -g docfx
+
+            - name: Restore NuGet packages
+              run: dotnet restore ${{ env.SOLUTION_FILE_PATH }}
+
+            - name: Create temporary signing certificate
+              run: |
+                  $cert = New-SelfSignedCertificate -Type Custom -Subject "CN=Bookmarkly-Temp-Cert" -KeyUsage DigitalSignature -FriendlyName "Bookmarkly Temp Signing Cert" -CertStoreLocation "Cert:\CurrentUser\My" -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+                  $password = ConvertTo-SecureString -String "${{ secrets.CERT_PASSWORD || 'TempPassword123!' }}" -Force -AsPlainText
+                  Export-PfxCertificate -Cert "Cert:\CurrentUser\My\$($cert.Thumbprint)" -FilePath GitHubActionsWorkflow.pfx -Password $password
+                  echo "Certificate created successfully"
+              shell: pwsh
+
+            - name: Build MSIX package
+              run: |
+                  msbuild ${{ env.PROJECT_PATH }} `
+                    /p:Configuration=${{ env.CONFIGURATION }} `
+                    /p:Platform=${{ env.PLATFORM }} `
+                    /p:PublishTrimmed=false `
+                    /p:UapAppxPackageBuildMode=SideloadOnly `
+                    /p:AppxBundle=Always `
+                    /p:RuntimeIdentifier=win-x64 `
+                    /p:AppxBundlePlatforms=${{ env.PLATFORM }} `
+                    /p:AppxPackageDir="${{ github.workspace }}\AppPackages\" `
+                    /p:AppxPackageSigningEnabled=true `
+                    /p:PackageCertificateKeyFile="${{ github.workspace }}\GitHubActionsWorkflow.pfx" `
+                    /p:PackageCertificatePassword="${{ secrets.CERT_PASSWORD || 'TempPassword123!' }}" `
+                    /t:_GenerateAppxPackage `
+                    /restore
+              shell: pwsh
+
+            - name: Remove certificate file
+              run: |
+                  if (Test-Path -Path GitHubActionsWorkflow.pfx) {
+                    Remove-Item -Path GitHubActionsWorkflow.pfx -Force
+                    Write-Host "Certificate file removed successfully"
+                  } else {
+                    Write-Host "Certificate file not found, skipping removal"
+                  }
+              shell: pwsh
+              if: always()
+
+            - name: Build documentation
+              run: docfx docfx.json
+              continue-on-error: false
+
+            - name: Upload documentation artifact
+              uses: actions/upload-artifact@v6
+              with:
+                  name: documentation
+                  path: _site
+                  retention-days: 7
+
+            - name: Upload build output
+              uses: actions/upload-artifact@v6
+              with:
+                  name: build-output
+                  path: AppPackages/
+                  retention-days: 1
+
+            - name: Cleanup build artifacts
+              run: |
+                  # Clean obj and bin folders to free up space
+                  Get-ChildItem -Path . -Include obj,bin -Recurse -Directory | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+                  Write-Host "Build artifacts cleaned"
+              shell: pwsh
+              if: always()
+
+    package:
+        name: Create Package
+        runs-on: [self-hosted, windows]
+        needs: [bump-version, build]
+
+        steps:
+            - name: Download build output
+              uses: actions/download-artifact@v7
+              with:
+                  name: build-output
+                  path: AppPackages/
+
+            - name: Package into zip
+              run: |
+                  $zipName = "Bookmarkly_${{ needs.bump-version.outputs.version }}.zip"
+                  if (-not (Test-Path -Path "AppPackages")) {
+                    Write-Error "AppPackages folder not found. Failing so you can inspect logs."
+                    exit 1
+                  }
+                  Compress-Archive -Path "AppPackages\*" -DestinationPath $zipName -Force
+                  Write-Host "Created zip: $zipName"
+              shell: pwsh
+
+            - name: Find and copy appinstaller file
+              run: |
+                  # Find the .appinstaller file in the AppPackages directory
+                  $appInstallerFile = Get-ChildItem -Path "AppPackages" -Filter "*.appinstaller" -Recurse | Select-Object -First 1
+                  if ($appInstallerFile) {
+                    Copy-Item -Path $appInstallerFile.FullName -Destination "Bookmarkly.appinstaller"
+                    Write-Host "Found and copied appinstaller: $($appInstallerFile.FullName)"
+                  } else {
+                    Write-Host "No .appinstaller file found, creating placeholder"
+                    # Create a placeholder appinstaller file if not found
+                    # Note: Update the domain if deployment location changes
+                    $version = "${{ needs.bump-version.outputs.version }}"
+                    $content = @"
+                  <?xml version="1.0" encoding="utf-8"?>
+                  <AppInstaller Uri="https://bookmarkly.pages.dev/downloads/Bookmarkly.appinstaller" Version="$version">
+                    <MainBundle Name="Bookmarkly" Version="$version" Publisher="CN=Bookmarkly" Uri="https://bookmarkly.pages.dev/downloads/Bookmarkly.zip"/>
+                    <UpdateSettings>
+                      <OnLaunch HoursBetweenUpdateChecks="0"/>
+                    </UpdateSettings>
+                  </AppInstaller>
+                  "@
+                    $content | Out-File -FilePath "Bookmarkly.appinstaller" -Encoding utf8
+                  }
+              shell: pwsh
+
+            - name: Upload package artifact
+              uses: actions/upload-artifact@v6
+              with:
+                  name: Bookmarkly_${{ needs.bump-version.outputs.version }}
+                  path: Bookmarkly_${{ needs.bump-version.outputs.version }}.zip
+                  if-no-files-found: error
+
+            - name: Upload appinstaller artifact
+              uses: actions/upload-artifact@v6
+              with:
+                  name: Bookmarkly_appinstaller
+                  path: Bookmarkly.appinstaller
+                  if-no-files-found: error
+
+    release:
+        name: Create Release
+        runs-on: [self-hosted, windows]
+        needs: [bump-version, package]
+        outputs:
+            release_url: ${{ steps.create_release.outputs.url }}
+
+        steps:
+            - name: Download package artifact
+              uses: actions/download-artifact@v7
+              with:
+                  name: Bookmarkly_${{ needs.bump-version.outputs.version }}
+                  path: .
+
+            - name: Create Release
+              id: create_release
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: v${{ needs.bump-version.outputs.version }}
+                  name: Release v${{ needs.bump-version.outputs.version }}
+                  files: Bookmarkly_${{ needs.bump-version.outputs.version }}.zip
+                  generate_release_notes: true
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    deploy-to-cloudflare:
+        name: Deploy to Cloudflare Pages
+        runs-on: [self-hosted, linux]
+        needs: [bump-version, package, release]
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+              with:
+                  ref: ${{ inputs.target_branch }}
+                  fetch-depth: 0
+
+            - name: Download package artifact (ZIP)
+              uses: actions/download-artifact@v7
+              with:
+                  name: Bookmarkly_${{ needs.bump-version.outputs.version }}
+                  path: ./package
+
+            - name: Download appinstaller artifact
+              uses: actions/download-artifact@v7
+              with:
+                  name: Bookmarkly_appinstaller
+                  path: ./package
+
+            - name: Prepare landing page
+              run: |
+                  # Create deployment directory
+                  mkdir -p deploy/assets deploy/downloads
+
+                  # Copy landing page template
+                  cp .github/landing-page/index.html deploy/
+
+                  # Copy app icon
+                  cp Bookmarkly.App/Assets/StoreLogo.png deploy/assets/app-icon.png
+
+                  # Copy the release ZIP and appinstaller to downloads with standardized names
+                  cp package/Bookmarkly_${{ needs.bump-version.outputs.version }}.zip deploy/downloads/Bookmarkly.zip
+                  cp package/Bookmarkly.appinstaller deploy/downloads/Bookmarkly.appinstaller
+
+                  # Calculate SHA256 hash of the ZIP file
+                  ZIP_SHA256=$(sha256sum package/Bookmarkly_${{ needs.bump-version.outputs.version }}.zip | cut -d ' ' -f 1)
+                  SHORT_ZIP_SHA="${ZIP_SHA256:0:16}"
+
+                  # Set URLs for downloads
+                  ZIP_URL="./downloads/Bookmarkly.zip"
+                  APPINSTALLER_URL="./downloads/Bookmarkly.appinstaller"
+
+                  # Generate release notes from tags using Conventional Commits
+                  generate_release_notes() {
+                    local RELEASE_HTML=""
+                    local COMMIT_TYPES=("feat" "fix" "refactor" "docs" "style" "perf" "test" "build" "ci")
+                    local COMMIT_TYPE_LABELS=("Feat" "Fix" "Refactor" "Docs" "Style" "Perf" "Test" "Build" "CI")
+                    
+                    # Get up to 10 most recent tags
+                    local TAGS=$(git tag --sort=-version:refname | head -10)
+                    
+                    if [ -z "$TAGS" ]; then
+                      echo '<p class="text-gray-600 dark:text-gray-400">No releases found.</p>'
+                      return
+                    fi
+                    
+                    local PREV_TAG=""
+                    local TAG_COUNT=0
+                    
+                    while IFS= read -r TAG; do
+                      if [ -z "$TAG" ]; then
+                        continue
+                      fi
+                      
+                      TAG_COUNT=$((TAG_COUNT + 1))
+                      
+                      # Get the tag date
+                      local TAG_DATE=$(git log -1 --format=%ad --date=short "$TAG" 2>/dev/null || echo "Unknown date")
+                      
+                      # Get commits between this tag and the previous (older) one
+                      # Tags are sorted newest first, so PREV_TAG (if set) is actually newer
+                      local COMMITS=""
+                      if [ -n "$PREV_TAG" ]; then
+                        # PREV_TAG is newer, TAG is older, so get commits: TAG..PREV_TAG
+                        COMMITS=$(git log --pretty=format:"%s" "$TAG".."$PREV_TAG" 2>/dev/null)
+                      else
+                        # This is the newest tag, find the next older tag to get commits for this release
+                        local OLDER_TAG=$(git tag --sort=-version:refname | grep -A1 "^${TAG}$" | tail -1)
+                        if [ -n "$OLDER_TAG" ] && [ "$OLDER_TAG" != "$TAG" ]; then
+                          COMMITS=$(git log --pretty=format:"%s" "$OLDER_TAG".."$TAG" 2>/dev/null)
+                        else
+                          # Only one tag or no older tag, get last 20 commits for initial release
+                          # Limit of 20 provides reasonable context without overwhelming the changelog
+                          COMMITS=$(git log --pretty=format:"%s" -20 "$TAG" 2>/dev/null)
+                        fi
+                      fi
+                      
+                      # Start building this release's HTML
+                      local RELEASE_CONTENT=""
+                      local HAS_CONVENTIONAL=false
+                      
+                      # Group commits by type
+                      for i in "${!COMMIT_TYPES[@]}"; do
+                        local TYPE="${COMMIT_TYPES[$i]}"
+                        local LABEL="${COMMIT_TYPE_LABELS[$i]}"
+                        local TYPE_COMMITS=""
+                        
+                        while IFS= read -r COMMIT; do
+                          if [ -z "$COMMIT" ]; then
+                            continue
+                          fi
+                          
+                          # Skip chore commits
+                          if [[ "$COMMIT" =~ ^chore(\(.+\))?:.*$ ]]; then
+                            continue
+                          fi
+                          
+                          # Check if commit matches this type
+                          if [[ "$COMMIT" =~ ^${TYPE}(\(.+\))?:(.*)$ ]]; then
+                            local MSG="${BASH_REMATCH[2]}"
+                            MSG=$(echo "$MSG" | sed 's/^[[:space:]]*//')
+                            TYPE_COMMITS="${TYPE_COMMITS}<li class=\"text-gray-600 dark:text-gray-400 py-1\">${MSG}</li>"
+                            HAS_CONVENTIONAL=true
+                          fi
+                        done <<< "$COMMITS"
+                        
+                        if [ -n "$TYPE_COMMITS" ]; then
+                          RELEASE_CONTENT="${RELEASE_CONTENT}<div class=\"mb-3\"><strong class=\"text-gray-900 dark:text-white\">${LABEL}</strong><ul class=\"list-disc list-inside ml-2 mt-1\">${TYPE_COMMITS}</ul></div>"
+                        fi
+                      done
+                      
+                      # If no conventional commits found, add a generic message
+                      if [ "$HAS_CONVENTIONAL" = false ]; then
+                        RELEASE_CONTENT='<p class="text-gray-600 dark:text-gray-400">Bug fixes and performance improvements.</p>'
+                      fi
+                      
+                      # Build the collapsible release item
+                      RELEASE_HTML="${RELEASE_HTML}<details class=\"release-item\"><summary class=\"font-semibold text-gray-900 dark:text-white\">Release ${TAG} <span class=\"text-gray-500 dark:text-gray-400 font-normal\">• ${TAG_DATE}</span></summary><div class=\"release-content\">${RELEASE_CONTENT}</div></details>"
+                      
+                      PREV_TAG="$TAG"
+                    done <<< "$TAGS"
+                    
+                    echo "$RELEASE_HTML"
+                  }
+
+                  RELEASE_NOTES=$(generate_release_notes)
+
+                  # If release notes are empty, provide default
+                  if [ -z "$RELEASE_NOTES" ]; then
+                    RELEASE_NOTES='<p class="text-gray-600 dark:text-gray-400">No release notes available.</p>'
+                  fi
+
+                  # Replace placeholders in index.html
+                  sed -i "s|{{VERSION}}|v${{ needs.bump-version.outputs.version }}|g" deploy/index.html
+                  sed -i "s|{{ZIP_SHA}}|${SHORT_ZIP_SHA}|g" deploy/index.html
+                  sed -i "s|{{ZIP_URL}}|${ZIP_URL}|g" deploy/index.html
+                  sed -i "s|{{APPINSTALLER_URL}}|${APPINSTALLER_URL}|g" deploy/index.html
+
+                  # Create a temporary file with release notes and use it for replacement
+                  echo "$RELEASE_NOTES" > /tmp/release_notes.html
+                  # Use awk for multi-line replacement
+                  awk -v notes="$(cat /tmp/release_notes.html)" '{gsub(/\{\{RELEASE_NOTES\}\}/, notes)}1' deploy/index.html > deploy/index.html.tmp && mv deploy/index.html.tmp deploy/index.html
+
+                  echo "Landing page prepared successfully"
+                  echo "Files in deploy/downloads:"
+                  ls -la deploy/downloads/
+              shell: bash
+
+            - name: Deploy to Cloudflare Pages
+              uses: cloudflare/wrangler-action@v3
+              env:
+                  CLOUDFLARE_PROJECT: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+                  DEPLOY_BRANCH: ${{ inputs.target_branch }}
+              with:
+                  apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+                  accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+                  command: pages deploy deploy --project-name="${{ secrets.CLOUDFLARE_PROJECT_NAME }}" --branch="${{ inputs.target_branch }}"
+
+    deploy-docs:
+        name: Deploy to GitHub Pages
+        runs-on: [self-hosted, linux]
+        needs: build
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+
+        steps:
+            - name: Download documentation artifact
+              uses: actions/download-artifact@v7
+              with:
+                  name: documentation
+                  path: _site
+
+            - name: Setup Pages
+              uses: actions/configure-pages@v5
+
+            - name: Upload to GitHub Pages
+              uses: actions/upload-pages-artifact@v4
+              with:
+                  path: _site
+
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4
