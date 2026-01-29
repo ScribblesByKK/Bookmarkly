@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/ScribblesByKK/Bookmarkly/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/ScribblesByKK/Bookmarkly/actions/workflows/test.yml)
 [![Build and Release](https://github.com/ScribblesByKK/Bookmarkly/actions/workflows/msix-build-release.yml/badge.svg)](https://github.com/ScribblesByKK/Bookmarkly/releases/latest)
-[![Code Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/ScribblesByKK/826955c744b9dab49575e313d98958dc/raw/coverage.json)](https://github.com/ScribblesByKK/Bookmarkly/actions/workflows/test.yml)
+[![Code Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Kumara-Krishnan/826955c744b9dab49575e313d98958dc/raw/coverage.json)](https://github.com/ScribblesByKK/Bookmarkly/actions/workflows/test.yml)
 
 A bookmark management application for Windows.
 
