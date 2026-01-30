@@ -46,7 +46,7 @@ permissions:
 jobs:
   bump-version:
     name: Bump Version
-    runs-on: ${{ (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted')) && '[self-hosted, windows]' || 'windows-latest' }}
+    runs-on: ${{ (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted')) && fromJSON('["self-hosted", "windows"]') || 'windows-latest' }}
     outputs:
       version: ${{ steps.version.outputs.version }}
 
@@ -54,7 +54,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.target_branch || github.ref_name }}
+          ref: ${{ inputs.target_branch || (github.event_name == 'pull_request' && github.head_ref) || github.ref_name }}
           token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
           submodules: recursive
@@ -77,14 +77,14 @@ jobs:
 
   build:
     name: Build Solution
-    runs-on: ${{ (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted')) && '[self-hosted, windows]' || 'windows-latest' }}
+    runs-on: ${{ (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted')) && fromJSON('["self-hosted", "windows"]') || 'windows-latest' }}
     needs: bump-version
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.target_branch || github.ref_name }}
+          ref: ${{ inputs.target_branch || (github.event_name == 'pull_request' && github.head_ref) || github.ref_name }}
           token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
           fetch-depth: 1
           submodules: recursive
@@ -170,7 +170,7 @@ jobs:
 
   package:
     name: Create Package
-    runs-on: ${{ (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted')) && '[self-hosted, windows]' || 'windows-latest' }}
+    runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted') && fromJSON('["self-hosted", "windows"]') || 'windows-latest' }}
     needs: [bump-version, build]
     if: github.event_name != 'pull_request'
 
@@ -233,7 +233,7 @@ jobs:
 
   release:
     name: Create Release
-    runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted') && '[self-hosted, windows]' || 'windows-latest' }}
+    runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted') && fromJSON('["self-hosted", "windows"]') || 'windows-latest' }}
     needs: [bump-version, package]
     if: github.event_name != 'pull_request'
     outputs:
@@ -259,7 +259,7 @@ jobs:
 
   deploy-to-cloudflare:
     name: Deploy to Cloudflare Pages
-    runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted') && '[self-hosted, linux]' || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted') && fromJSON('["self-hosted", "linux"]') || 'ubuntu-latest' }}
     needs: [bump-version, package, release]
     if: github.event_name != 'pull_request'
 
@@ -433,7 +433,7 @@ jobs:
 
   deploy-docs:
     name: Deploy to GitHub Pages
-    runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted') && '[self-hosted, linux]' || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'workflow_dispatch' && inputs.runner_type == 'self-hosted') && fromJSON('["self-hosted", "linux"]') || 'ubuntu-latest' }}
     needs: build
     if: github.event_name != 'pull_request'
     environment:
