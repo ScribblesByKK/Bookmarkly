@@ -54,7 +54,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.target_branch || github.ref_name }}
+          ref: ${{ inputs.target_branch || (github.event_name == 'pull_request' && github.head_ref) || github.ref_name }}
           token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
           submodules: recursive
@@ -84,7 +84,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.target_branch || github.ref_name }}
+          ref: ${{ inputs.target_branch || (github.event_name == 'pull_request' && github.head_ref) || github.ref_name }}
           token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
           fetch-depth: 1
           submodules: recursive
@@ -267,7 +267,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.target_branch || github.ref_name }}
+          ref: ${{ inputs.target_branch || (github.event_name == 'pull_request' && github.head_ref) || github.ref_name }}
           fetch-depth: 0
 
       - name: Download package artifact (ZIP)
