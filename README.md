@@ -1,8 +1,8 @@
 # Bookmarkly
 
-[![Tests](https://github.com/Kumara-Krishnan/Bookmarkly/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Kumara-Krishnan/Bookmarkly/actions/workflows/test.yml)
-[![Build and Release](https://github.com/Kumara-Krishnan/Bookmarkly/actions/workflows/msix-build-release.yml/badge.svg)](https://github.com/Kumara-Krishnan/Bookmarkly/releases/latest)
-[![Code Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Kumara-Krishnan/bookmarkly-coverage-badge/raw/coverage.json)](https://github.com/Kumara-Krishnan/Bookmarkly/actions/workflows/test.yml)
+[![Tests](https://github.com/ScribblesByKK/Bookmarkly/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/ScribblesByKK/Bookmarkly/actions/workflows/test.yml)
+[![Build and Release](https://github.com/ScribblesByKK/Bookmarkly/actions/workflows/msix-build-release.yml/badge.svg)](https://github.com/ScribblesByKK/Bookmarkly/releases/latest)
+[![Code Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Kumara-Krishnan/826955c744b9dab49575e313d98958dc/raw/coverage.json)](https://github.com/ScribblesByKK/Bookmarkly/actions/workflows/test.yml)
 
 A bookmark management application for Windows.
 
@@ -20,7 +20,7 @@ This project uses .NET 10 and Windows App SDK.
 
 1. Clone the repository with submodules:
    ```bash
-   git clone --recurse-submodules https://github.com/Kumara-Krishnan/Bookmarkly.git
+   git clone --recurse-submodules https://github.com/ScribblesByKK/Bookmarkly.git
    ```
 
    Or if you've already cloned the repository, initialize the submodules:

@@ -137,9 +137,9 @@ jobs:
       uses: schneegans/dynamic-badges-action@v1.7.0
       with:
         auth: ${{ secrets.GIST_SECRET }}
-        gistID: bookmarkly-coverage-badge
+        gistID: 826955c744b9dab49575e313d98958dc
         filename: coverage.json
-        label: Coverage
+        label: code coverage
         message: ${{ steps.check_coverage.outputs.has_coverage == 'true' && steps.extract_coverage.outputs.coverage || steps.default_coverage.outputs.coverage }}%
         color: green
         namedLogo: .NET

@@ -14,33 +14,12 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    # Group all NuGet package updates into a single pull request
-    groups:
-      nuget-dependencies:
-        patterns:
-          - "*"
-    # Set the number of open pull requests allowed
-    open-pull-requests-limit: 5
-    # Add labels to pull requests
-    labels:
-      - "dependencies"
-      - "nuget"
-    # Ignore major version updates for stable packages (optional)
-    # You can customize this based on your needs
-    # ignore:
-    #   - dependency-name: "*"
-    #     update-types: ["version-update:semver-major"]
-  
+    open-pull-requests-limit: 10
+
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-    groups:
-      github-actions:
-        patterns:
-          - "*"
-    labels:
-      - "dependencies"
-      - "github-actions"
+    open-pull-requests-limit: 5
