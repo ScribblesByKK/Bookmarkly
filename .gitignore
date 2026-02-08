@@ -423,3 +423,5 @@ api/
 .manifest
 
 .playwright-mcp/
+
+_manifest/

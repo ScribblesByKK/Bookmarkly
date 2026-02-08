@@ -1,17 +1,16 @@
-namespace Bookmarkly.Entities.Abstractions
+namespace Bookmarkly.Entities.Abstractions;
+
+public interface IUserArticleMetaData : IArticleMetaData
 {
-    public interface IUserArticleMetaData : IArticleMetaData
-    {
-        string UserId { get; set; }
+    string UserId { get; set; }
 
-        string FolderId { get; set; }
+    string FolderId { get; set; }
 
-        DateTimeOffset CreatedAt { get; set; }
+    DateTimeOffset CreatedAt { get; set; }
 
-        DateTimeOffset UpdatedAt { get; set; }
+    DateTimeOffset UpdatedAt { get; set; }
 
-        bool IsRead { get; set; }
+    bool IsRead { get; set; }
 
-        bool IsFavorite { get; set; }
-    }
+    bool IsFavorite { get; set; }
 }
