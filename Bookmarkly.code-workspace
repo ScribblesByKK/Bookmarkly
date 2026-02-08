@@ -4,5 +4,11 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"github-actions.workflows.pinned.workflows": [
+			".github/workflows/msix-build-release.yml",
+			".github/workflows/test.yml",
+			".github/workflows/docfx.yml"
+		]
+	}
 }

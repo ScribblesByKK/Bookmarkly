@@ -1,15 +1,14 @@
-namespace Bookmarkly.Entities.Abstractions
+namespace Bookmarkly.Entities.Abstractions;
+
+public interface IArticleMetaData
 {
-    public interface IArticleMetaData
-    {
-        string Id { get; set; }
+    string Id { get; set; }
 
-        string Title { get; set; }
+    string Title { get; set; }
 
-        string Url { get; set; }
+    string Url { get; set; }
 
-        string Summary { get; set; }
+    string Summary { get; set; }
 
-        string ThumbnailUrl { get; set; }
-    }
+    string ThumbnailUrl { get; set; }
 }

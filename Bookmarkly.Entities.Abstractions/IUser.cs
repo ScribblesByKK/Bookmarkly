@@ -1,9 +1,8 @@
-namespace Bookmarkly.Entities.Abstractions
-{
-    public interface IUser
-    {
-        string Id { get; set; }
+namespace Bookmarkly.Entities.Abstractions;
 
-        string DisplayName { get; set; }
-    }
+public interface IUser
+{
+    string Id { get; set; }
+
+    string DisplayName { get; set; }
 }
