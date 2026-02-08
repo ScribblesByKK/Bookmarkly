@@ -1,13 +1,9 @@
 using System.Collections.ObjectModel;
-using Cyclotron.Telemetry.DependencyInjection;
+using Cyclotron.Extensions.DependencyInjection;
 using Cyclotron.Telemetry.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
-
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace Bookmarkly.App;
 
@@ -16,7 +12,7 @@ namespace Bookmarkly.App;
 /// </summary>
 public sealed partial class MainWindow : Window
 {
-    private readonly ObservableCollection<int> _datas = new();
+    private readonly ObservableCollection<int> _datas = [];
     public MainWindow()
     {
         _datas.Add(1);
