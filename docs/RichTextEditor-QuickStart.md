@@ -78,11 +78,12 @@ Bookmarkly.Views/
 
 ### Step 1: Get a Model
 
-Download an ONNX-compatible model from Hugging Face or convert your own:
+Download an ONNX-compatible model from Hugging Face or convert your own. Note: You'll need to find or convert a model to ONNX format compatible with ONNX Runtime GenAI.
 
 ```bash
-# Example: Download Phi-2 model (hypothetical)
-git clone https://huggingface.co/microsoft/phi-2-onnx
+# Example: Search for ONNX models on Hugging Face
+# Visit https://huggingface.co/models?library=onnx
+# Example models: microsoft/phi-2, gpt2, etc. (convert to ONNX format)
 ```
 
 ### Step 2: Initialize Service

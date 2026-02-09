@@ -89,8 +89,8 @@ public class OnnxTextCompletionService : ITextCompletionService, IDisposable
                     generator.ComputeLogits();
                     generator.GenerateNextToken();
                     
-                    var newToken = generator.GetSequence(0)[^1];
-                    outputSequence.Add((int)newToken);
+                    var latestToken = generator.GetSequence(0)[^1];
+                    outputSequence.Add((int)latestToken);
                 }
 
                 // Decode output
@@ -149,8 +149,8 @@ public class OnnxTextCompletionService : ITextCompletionService, IDisposable
                     generator.ComputeLogits();
                     generator.GenerateNextToken();
                     
-                    var newToken = generator.GetSequence(0)[^1];
-                    outputSequence.Add((int)newToken);
+                    var latestToken = generator.GetSequence(0)[^1];
+                    outputSequence.Add((int)latestToken);
                 }
 
                 // Decode output
