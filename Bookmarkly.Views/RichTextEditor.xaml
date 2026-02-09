@@ -8,25 +8,13 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid>
-        <!-- Main editable text area -->
-        <RichEditBox
-            x:Name="EditorBox"
-            BorderThickness="1"
-            BorderBrush="{ThemeResource TextControlBorderBrush}"
-            Background="{ThemeResource TextControlBackground}"
-            AcceptsReturn="True"
-            TextWrapping="Wrap"
-            PreviewKeyDown="EditorBox_PreviewKeyDown"
-            TextChanged="EditorBox_TextChanged"/>
-        
-        <!-- Shadow text overlay for completions -->
-        <TextBlock
-            x:Name="ShadowText"
-            IsHitTestVisible="False"
-            Foreground="{ThemeResource SystemControlDisabledBaseMediumLowBrush}"
-            Opacity="0.5"
-            Margin="8,8,8,8"
-            TextWrapping="Wrap"/>
-    </Grid>
+    <Border
+        BorderThickness="1"
+        BorderBrush="{ThemeResource TextControlBorderBrush}"
+        Background="{ThemeResource TextControlBackground}"
+        CornerRadius="4">
+        <WebView2
+            x:Name="WebView"
+            DefaultBackgroundColor="Transparent"/>
+    </Border>
 </UserControl>

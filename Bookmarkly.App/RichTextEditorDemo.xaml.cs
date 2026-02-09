@@ -34,13 +34,13 @@ public sealed partial class RichTextEditorDemo : Page
         }
     }
 
-    private void ClearEditor_Click(object sender, RoutedEventArgs e)
+    private async void ClearEditor_Click(object sender, RoutedEventArgs e)
     {
-        Editor.Text = string.Empty;
+        await Editor.SetTextAsync(string.Empty);
     }
 
-    private void SetSampleText_Click(object sender, RoutedEventArgs e)
+    private async void SetSampleText_Click(object sender, RoutedEventArgs e)
     {
-        Editor.Text = "I think the";
+        await Editor.SetTextAsync("I think the");
     }
 }

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rich Text Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: transparent;
+            padding: 8px;
+        }
+
+        #editor-container {
+            position: relative;
+            min-height: 300px;
+            width: 100%;
+        }
+
+        #shadow-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 12px;
+            color: #888;
+            opacity: 0.6;
+            pointer-events: none;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.5;
+            z-index: 1;
+        }
+
+        #editor {
+            position: relative;
+            padding: 12px;
+            min-height: 300px;
+            outline: none;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            z-index: 2;
+            background: transparent;
+        }
+
+        #editor:empty:before {
+            content: attr(data-placeholder);
+            color: #999;
+            pointer-events: none;
+        }
+
+        /* Make sure text in editor is visible */
+        #editor {
+            color: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div id="editor-container">
+        <div id="shadow-text"></div>
+        <div id="editor" contenteditable="true" data-placeholder="Start typing..."></div>
+    </div>
+
+    <script>
+        const editor = document.getElementById('editor');
+        const shadowText = document.getElementById('shadow-text');
+        let currentCompletion = '';
+        let debounceTimer = null;
+
+        // Track text changes
+        editor.addEventListener('input', function() {
+            // Clear shadow text when user types
+            currentCompletion = '';
+            shadowText.textContent = '';
+
+            // Debounce completion request
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const text = editor.textContent || '';
+                requestCompletion(text);
+            }, 300);
+        });
+
+        // Handle keyboard events
+        editor.addEventListener('keydown', function(e) {
+            // Tab or Right Arrow to accept completion
+            if ((e.key === 'Tab' || e.key === 'ArrowRight') && currentCompletion) {
+                // For Right Arrow, only accept if cursor is at end
+                if (e.key === 'ArrowRight') {
+                    const selection = window.getSelection();
+                    const range = selection.getRangeAt(0);
+                    const textLength = editor.textContent.length;
+                    
+                    // Calculate cursor position
+                    const preCaretRange = range.cloneRange();
+                    preCaretRange.selectNodeContents(editor);
+                    preCaretRange.setEnd(range.endContainer, range.endOffset);
+                    const caretPosition = preCaretRange.toString().length;
+                    
+                    if (caretPosition < textLength) {
+                        return; // Not at end, allow normal navigation
+                    }
+                }
+
+                e.preventDefault();
+                acceptCompletion();
+            }
+        });
+
+        // Request completion from C# host
+        function requestCompletion(text) {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage({
+                    type: 'requestCompletion',
+                    text: text
+                });
+            }
+        }
+
+        // Called from C# to set the completion
+        function setCompletion(completion) {
+            currentCompletion = completion || '';
+            updateShadowText();
+        }
+
+        // Update shadow text display
+        function updateShadowText() {
+            const currentText = editor.textContent || '';
+            if (currentCompletion) {
+                shadowText.textContent = currentText + currentCompletion;
+            } else {
+                shadowText.textContent = '';
+            }
+        }
+
+        // Accept the current completion
+        function acceptCompletion() {
+            if (!currentCompletion) {
+                return;
+            }
+
+            const currentText = editor.textContent || '';
+            const newText = currentText + currentCompletion;
+            
+            // Insert the completion
+            editor.textContent = newText;
+            
+            // Move cursor to end
+            const range = document.createRange();
+            const selection = window.getSelection();
+            range.selectNodeContents(editor);
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+            // Clear completion and request next one
+            currentCompletion = '';
+            shadowText.textContent = '';
+            
+            setTimeout(() => {
+                requestCompletion(newText);
+            }, 100);
+        }
+
+        // Called from C# to set text
+        function setText(text) {
+            editor.textContent = text || '';
+            currentCompletion = '';
+            shadowText.textContent = '';
+        }
+
+        // Called from C# to get text
+        function getText() {
+            return editor.textContent || '';
+        }
+
+        // Called from C# to set placeholder
+        function setPlaceholder(placeholder) {
+            editor.setAttribute('data-placeholder', placeholder || 'Start typing...');
+        }
+
+        // Notify C# when editor is ready
+        if (window.chrome && window.chrome.webview) {
+            window.chrome.webview.postMessage({
+                type: 'ready'
+            });
+        }
+
+        // Request initial completion if empty and context is available
+        editor.addEventListener('focus', function() {
+            if (!editor.textContent) {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage({
+                        type: 'requestSmartReply'
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

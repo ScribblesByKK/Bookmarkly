@@ -1,23 +1,22 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
+using Microsoft.Web.WebView2.Core;
 using System;
+using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Windows.System;
-using Windows.UI.Text;
 
 namespace Bookmarkly.Views;
 
 /// <summary>
-/// A rich text editor control with LLM-powered text completion support.
+/// A rich text editor control using WebView2 with contenteditable div and LLM-powered text completion.
 /// Displays shadow text completions that can be accepted with Tab or Right Arrow keys.
 /// </summary>
 public sealed partial class RichTextEditor : UserControl
 {
-    private string _currentText = string.Empty;
-    private string _shadowCompletion = string.Empty;
     private ITextCompletionService? _completionService;
     private string? _contextForEmptyEditor;
+    private bool _isInitialized;
 
     /// <summary>
     /// Gets or sets the text completion service used to generate suggestions.
@@ -34,84 +33,88 @@ public sealed partial class RichTextEditor : UserControl
     public string? ContextForEmptyEditor
     {
         get => _contextForEmptyEditor;
-        set
-        {
-            _contextForEmptyEditor = value;
-            // If editor is empty and we have context, request initial completion
-            if (string.IsNullOrEmpty(_currentText) && !string.IsNullOrEmpty(_contextForEmptyEditor))
-            {
-                _ = RequestCompletionAsync();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets the current text in the editor.
-    /// </summary>
-    public string Text
-    {
-        get
-        {
-            EditorBox.Document.GetText(TextGetOptions.None, out var text);
-            return text?.TrimEnd('\r', '\n') ?? string.Empty;
-        }
-        set
-        {
-            EditorBox.Document.SetText(TextSetOptions.None, value ?? string.Empty);
-            _currentText = value ?? string.Empty;
-        }
+        set => _contextForEmptyEditor = value;
     }
 
     public RichTextEditor()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
     }
 
-    private async void EditorBox_TextChanged(object sender, RoutedEventArgs e)
+    private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        EditorBox.Document.GetText(TextGetOptions.None, out var text);
-        var cleanText = text?.TrimEnd('\r', '\n') ?? string.Empty;
-
-        // Clear shadow text when user types
-        if (cleanText != _currentText)
-        {
-            _currentText = cleanText;
-            _shadowCompletion = string.Empty;
-            ShadowText.Text = string.Empty;
-
-            // Request new completion after a short delay
-            await Task.Delay(300);
-            await RequestCompletionAsync();
-        }
+        await InitializeWebViewAsync();
     }
 
-    private async void EditorBox_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
+    private async Task InitializeWebViewAsync()
     {
-        // Accept completion on Tab or Right Arrow
-        if ((e.Key == VirtualKey.Tab || e.Key == VirtualKey.Right) && 
-            !string.IsNullOrEmpty(_shadowCompletion))
+        try
         {
-            // Check if Right Arrow should accept completion
-            // (only if cursor is at the end)
-            if (e.Key == VirtualKey.Right)
+            await WebView.EnsureCoreWebView2Async();
+
+            // Set up message handler for communication from JavaScript
+            WebView.CoreWebView2.WebMessageReceived += OnWebMessageReceived;
+
+            // Load the HTML editor
+            var htmlPath = GetHtmlPath();
+            if (File.Exists(htmlPath))
             {
-                EditorBox.Document.Selection.GetRect(PointOptions.None, out var rect, out var hit);
-                var endPosition = EditorBox.Document.GetRange((int)TextRangeUnit.Story, 0);
-                endPosition.EndOf(TextRangeUnit.Story, false);
-                
-                // Only accept if at the end of text
-                if (EditorBox.Document.Selection.EndPosition < endPosition.EndPosition)
-                {
-                    return; // Not at end, allow normal navigation
-                }
+                WebView.CoreWebView2.Navigate(new Uri(htmlPath).AbsoluteUri);
+            }
+            else
+            {
+                // Fallback: load inline HTML
+                WebView.NavigateToString(GetInlineHtml());
             }
 
-            e.Handled = true;
-            await AcceptCompletionAsync();
+            _isInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            // Handle initialization errors
+            System.Diagnostics.Debug.WriteLine($"WebView2 initialization error: {ex.Message}");
         }
     }
 
-    private async Task RequestCompletionAsync()
+    private string GetHtmlPath()
+    {
+        // Try to find the HTML file in the Assets folder
+        var appPath = AppContext.BaseDirectory;
+        var htmlPath = Path.Combine(appPath, "Assets", "RichTextEditor.html");
+        
+        if (!File.Exists(htmlPath))
+        {
+            // Try relative path
+            htmlPath = Path.Combine(Directory.GetCurrentDirectory(), "Assets", "RichTextEditor.html");
+        }
+
+        return htmlPath;
+    }
+
+    private void OnWebMessageReceived(CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
+    {
+        try
+        {
+            var json = args.WebMessageAsJson;
+            var message = JsonSerializer.Deserialize<WebMessage>(json);
+
+            if (message?.Type == "requestCompletion")
+            {
+                _ = HandleCompletionRequestAsync(message.Text ?? string.Empty);
+            }
+            else if (message?.Type == "requestSmartReply")
+            {
+                _ = HandleSmartReplyRequestAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error handling web message: {ex.Message}");
+        }
+    }
+
+    private async Task HandleCompletionRequestAsync(string currentText)
     {
         if (_completionService == null)
         {
@@ -120,72 +123,197 @@ public sealed partial class RichTextEditor : UserControl
 
         try
         {
-            string completion;
-            if (string.IsNullOrEmpty(_currentText) && !string.IsNullOrEmpty(_contextForEmptyEditor))
-            {
-                // Use context for empty editor (smart reply)
-                completion = await _completionService.GetSmartReplyAsync(_contextForEmptyEditor);
-            }
-            else if (!string.IsNullOrEmpty(_currentText))
-            {
-                // Get completion based on current text
-                completion = await _completionService.GetCompletionAsync(_currentText);
-            }
-            else
-            {
-                return; // No text and no context
-            }
-
-            if (!string.IsNullOrEmpty(completion))
-            {
-                _shadowCompletion = completion;
-                UpdateShadowText();
-            }
+            var completion = await _completionService.GetCompletionAsync(currentText);
+            await SetCompletionAsync(completion);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Silently handle errors in completion service
-            _shadowCompletion = string.Empty;
-            ShadowText.Text = string.Empty;
+            System.Diagnostics.Debug.WriteLine($"Error getting completion: {ex.Message}");
         }
     }
 
-    private void UpdateShadowText()
+    private async Task HandleSmartReplyRequestAsync()
     {
-        if (string.IsNullOrEmpty(_shadowCompletion))
-        {
-            ShadowText.Text = string.Empty;
-            return;
-        }
-
-        // Display shadow text showing the completion
-        ShadowText.Text = _currentText + _shadowCompletion;
-    }
-
-    private async Task AcceptCompletionAsync()
-    {
-        if (string.IsNullOrEmpty(_shadowCompletion))
+        if (_completionService == null || string.IsNullOrEmpty(_contextForEmptyEditor))
         {
             return;
         }
 
-        // Insert the completion
-        var newText = _currentText + _shadowCompletion;
-        EditorBox.Document.SetText(TextSetOptions.None, newText);
-        _currentText = newText;
+        try
+        {
+            var reply = await _completionService.GetSmartReplyAsync(_contextForEmptyEditor);
+            await SetCompletionAsync(reply);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error getting smart reply: {ex.Message}");
+        }
+    }
 
-        // Clear shadow text
-        _shadowCompletion = string.Empty;
-        ShadowText.Text = string.Empty;
+    private async Task SetCompletionAsync(string completion)
+    {
+        if (!_isInitialized || string.IsNullOrEmpty(completion))
+        {
+            return;
+        }
 
-        // Move cursor to end
-        var endPosition = EditorBox.Document.GetRange((int)TextRangeUnit.Story, 0);
-        endPosition.EndOf(TextRangeUnit.Story, false);
-        EditorBox.Document.Selection.SetRange(endPosition.EndPosition, endPosition.EndPosition);
+        try
+        {
+            var escapedCompletion = JsonSerializer.Serialize(completion);
+            await WebView.ExecuteScriptAsync($"setCompletion({escapedCompletion});");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error setting completion: {ex.Message}");
+        }
+    }
 
-        // Request next completion
-        await Task.Delay(100);
-        await RequestCompletionAsync();
+    /// <summary>
+    /// Gets the current text in the editor.
+    /// </summary>
+    public async Task<string> GetTextAsync()
+    {
+        if (!_isInitialized)
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            var result = await WebView.ExecuteScriptAsync("getText();");
+            return JsonSerializer.Deserialize<string>(result) ?? string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Sets the text in the editor.
+    /// </summary>
+    public async Task SetTextAsync(string text)
+    {
+        if (!_isInitialized)
+        {
+            return;
+        }
+
+        try
+        {
+            var escapedText = JsonSerializer.Serialize(text ?? string.Empty);
+            await WebView.ExecuteScriptAsync($"setText({escapedText});");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error setting text: {ex.Message}");
+        }
+    }
+
+    private string GetInlineHtml()
+    {
+        // Inline HTML as fallback
+        return @"<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: transparent; padding: 8px; }
+        #editor-container { position: relative; min-height: 300px; width: 100%; }
+        #shadow-text { position: absolute; top: 0; left: 0; right: 0; padding: 12px; color: #888; opacity: 0.6; pointer-events: none; white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 1.5; z-index: 1; }
+        #editor { position: relative; padding: 12px; min-height: 300px; outline: none; font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; z-index: 2; background: transparent; }
+        #editor:empty:before { content: attr(data-placeholder); color: #999; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id='editor-container'>
+        <div id='shadow-text'></div>
+        <div id='editor' contenteditable='true' data-placeholder='Start typing...'></div>
+    </div>
+    <script>
+        const editor = document.getElementById('editor');
+        const shadowText = document.getElementById('shadow-text');
+        let currentCompletion = '';
+        let debounceTimer = null;
+
+        editor.addEventListener('input', function() {
+            currentCompletion = '';
+            shadowText.textContent = '';
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const text = editor.textContent || '';
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage({ type: 'requestCompletion', text: text });
+                }
+            }, 300);
+        });
+
+        editor.addEventListener('keydown', function(e) {
+            if ((e.key === 'Tab' || e.key === 'ArrowRight') && currentCompletion) {
+                if (e.key === 'ArrowRight') {
+                    const selection = window.getSelection();
+                    const range = selection.getRangeAt(0);
+                    const preCaretRange = range.cloneRange();
+                    preCaretRange.selectNodeContents(editor);
+                    preCaretRange.setEnd(range.endContainer, range.endOffset);
+                    const caretPosition = preCaretRange.toString().length;
+                    if (caretPosition < editor.textContent.length) return;
+                }
+                e.preventDefault();
+                acceptCompletion();
+            }
+        });
+
+        function setCompletion(completion) {
+            currentCompletion = completion || '';
+            const currentText = editor.textContent || '';
+            shadowText.textContent = currentCompletion ? currentText + currentCompletion : '';
+        }
+
+        function acceptCompletion() {
+            if (!currentCompletion) return;
+            const newText = (editor.textContent || '') + currentCompletion;
+            editor.textContent = newText;
+            const range = document.createRange();
+            const selection = window.getSelection();
+            range.selectNodeContents(editor);
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            currentCompletion = '';
+            shadowText.textContent = '';
+            setTimeout(() => {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage({ type: 'requestCompletion', text: newText });
+                }
+            }, 100);
+        }
+
+        function setText(text) {
+            editor.textContent = text || '';
+            currentCompletion = '';
+            shadowText.textContent = '';
+        }
+
+        function getText() {
+            return editor.textContent || '';
+        }
+
+        editor.addEventListener('focus', function() {
+            if (!editor.textContent && window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage({ type: 'requestSmartReply' });
+            }
+        });
+    </script>
+</body>
+</html>";
+    }
+
+    private class WebMessage
+    {
+        public string? Type { get; set; }
+        public string? Text { get; set; }
     }
 }
 

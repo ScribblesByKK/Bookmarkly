@@ -1,9 +1,10 @@
 # RichTextEditor Control
 
-A WinUI 3 control that provides an editable rich text area with AI-powered text completion. The control displays shadow text suggestions that users can accept by pressing Tab or the Right Arrow key.
+A WinUI 3 control that provides a WebView2-based editable rich text area with AI-powered text completion. The control uses an HTML `contenteditable` div and displays shadow text suggestions that users can accept by pressing Tab or the Right Arrow key.
 
 ## Features
 
+- **WebView2-Based**: Uses HTML contenteditable div for rich text editing
 - **Text Completion**: As users type, the control requests completions from an LLM service and displays them as shadow text
 - **Context-Aware Suggestions**: Completions are based on the current text in the editor
 - **Smart Replies**: When the editor is empty, provide context to generate smart reply suggestions
@@ -16,10 +17,11 @@ A WinUI 3 control that provides an editable rich text area with AI-powered text 
 
 The control consists of several components:
 
-1. **RichTextEditor.xaml / .xaml.cs**: Main control implementation
-2. **ITextCompletionService**: Interface for completion services
-3. **OnnxTextCompletionService**: Implementation using ONNX Runtime GenAI
-4. **MockTextCompletionService**: Mock implementation for testing and development
+1. **RichTextEditor.xaml / .xaml.cs**: Main control implementation using WebView2
+2. **Assets/RichTextEditor.html**: HTML template with contenteditable div and shadow text overlay
+3. **ITextCompletionService**: Interface for completion services
+4. **OnnxTextCompletionService**: Implementation using ONNX Runtime GenAI
+5. **MockTextCompletionService**: Mock implementation for testing and development
 
 ## Usage
 
@@ -48,11 +50,11 @@ Editor.ContextForEmptyEditor = "Hello! I hope you're doing well today.";
 ### Getting/Setting Text
 
 ```csharp
-// Get current text
-string text = Editor.Text;
+// Get current text (async)
+string text = await Editor.GetTextAsync();
 
-// Set text programmatically
-Editor.Text = "Hello world";
+// Set text programmatically (async)
+await Editor.SetTextAsync("Hello world");
 ```
 
 ## Using ONNX Runtime GenAI
@@ -123,29 +125,46 @@ See `Bookmarkly.App/RichTextEditorDemo.xaml` for a complete working example that
 
 ## Implementation Details
 
+### WebView2 and HTML
+
+The control loads an HTML page (`Assets/RichTextEditor.html`) into a WebView2 component. The HTML contains:
+- A `contenteditable` div for text input
+- A shadow text div positioned behind the editor
+- JavaScript for handling input, keyboard events, and communication with C#
+
 ### Shadow Text Rendering
 
-The control uses a `TextBlock` overlay positioned behind the editable `RichEditBox` to display shadow text. The shadow text shows the full text (current + completion) with reduced opacity.
+The shadow text is rendered as an absolutely positioned div with reduced opacity. It displays the full text (current + completion) while the contenteditable div shows only the actual user input.
+
+### JavaScript-C# Bridge
+
+Communication between JavaScript and C# happens via:
+- **JS to C#**: `window.chrome.webview.postMessage()` sends completion requests
+- **C# to JS**: `WebView.ExecuteScriptAsync()` calls JavaScript functions to set completions
 
 ### Completion Request Flow
 
-1. User types in the editor
-2. After 300ms delay, request completion from service
-3. Service returns suggested completion
-4. Display as shadow text
-5. User can accept with Tab/Right Arrow or keep typing
+1. User types in the contenteditable div
+2. JavaScript input event fires
+3. After 300ms debounce, JS sends completion request to C#
+4. C# calls the completion service
+5. C# sends completion back to JS
+6. JS displays as shadow text
+7. User can accept with Tab/Right Arrow or keep typing
 
 ### Performance Considerations
 
 - Completion requests are debounced (300ms delay) to avoid excessive API calls
 - Empty completions are handled gracefully
-- Errors from the completion service are caught and ignored silently
+- Errors from the completion service are caught and logged
+- WebView2 runs HTML/JS efficiently with hardware acceleration
 
 ## Dependencies
 
 - **Microsoft.WindowsAppSDK**: WinUI 3 controls
+- **Microsoft.Web.WebView2**: WebView2 control for embedding HTML
 - **Microsoft.ML.OnnxRuntimeGenAI**: ONNX Runtime for AI model inference
 
 ## Platform Support
 
-This control requires Windows 10/11 with the Windows App SDK installed. It uses WinUI 3 controls which are Windows-specific.
+This control requires Windows 10/11 with the Windows App SDK and WebView2 Runtime installed. WebView2 is included with Windows 11 and recent Windows 10 updates.
