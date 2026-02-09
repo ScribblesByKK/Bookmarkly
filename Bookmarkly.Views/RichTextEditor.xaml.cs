@@ -101,11 +101,33 @@ public sealed partial class RichTextEditor : UserControl
 
             if (message?.Type == "requestCompletion")
             {
-                _ = HandleCompletionRequestAsync(message.Text ?? string.Empty);
+                // Fire and forget with explicit error handling
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await HandleCompletionRequestAsync(message.Text ?? string.Empty);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error in HandleCompletionRequestAsync: {ex.Message}");
+                    }
+                });
             }
             else if (message?.Type == "requestSmartReply")
             {
-                _ = HandleSmartReplyRequestAsync();
+                // Fire and forget with explicit error handling
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await HandleSmartReplyRequestAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error in HandleSmartReplyRequestAsync: {ex.Message}");
+                    }
+                });
             }
         }
         catch (Exception ex)

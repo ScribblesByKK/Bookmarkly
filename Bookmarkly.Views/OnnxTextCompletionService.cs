@@ -178,14 +178,14 @@ public class OnnxTextCompletionService : ITextCompletionService, IDisposable
         var index = completion.IndexOf(originalText, StringComparison.OrdinalIgnoreCase);
         if (index >= 0)
         {
-            completion = completion.Substring(index + originalText.Length).Trim();
+            completion = completion[(index + originalText.Length)..].Trim();
         }
 
         // Take only the first sentence or until a natural break
         var firstBreak = completion.IndexOfAny(new[] { '.', '!', '?', '\n' });
         if (firstBreak > 0 && firstBreak < completion.Length - 1)
         {
-            completion = completion.Substring(0, firstBreak + 1);
+            completion = completion[..(firstBreak + 1)];
         }
 
         return completion;
