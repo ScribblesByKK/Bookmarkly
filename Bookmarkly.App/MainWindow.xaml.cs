@@ -47,5 +47,8 @@ public sealed partial class MainWindow : Window
         var logger = provider.GetRequiredService<ICyclotronLogger>().ForModule("Instapaper");
 
         logger.LogInformation("Starting operation"); // Caller info auto-captured!
+        
+        // Navigate to the RichTextEditor demo page
+        RootFrame.Navigate(typeof(RichTextEditorDemo));
     }
 }

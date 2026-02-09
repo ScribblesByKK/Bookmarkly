@@ -41,6 +41,7 @@
             Include="..\Cyclotron\Cyclotron.FileSystemAdapter\Cyclotron.FileSystemAdapter.csproj" />
         <ProjectReference Include="..\Cyclotron\Cyclotron.Telemetry\Cyclotron.Telemetry.csproj" />
         <ProjectReference Include="..\Cyclotron\Cyclotron.Utilities\Cyclotron.Utilities.csproj" />
+        <ProjectReference Include="..\Bookmarkly.Views\Bookmarkly.Views.csproj" />
     </ItemGroup>
 
     <!--

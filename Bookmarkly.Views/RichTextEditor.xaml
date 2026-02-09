@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Bookmarkly.Views.RichTextEditor"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:Bookmarkly.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid>
+        <!-- Main editable text area -->
+        <RichEditBox
+            x:Name="EditorBox"
+            BorderThickness="1"
+            BorderBrush="{ThemeResource TextControlBorderBrush}"
+            Background="{ThemeResource TextControlBackground}"
+            AcceptsReturn="True"
+            TextWrapping="Wrap"
+            PreviewKeyDown="EditorBox_PreviewKeyDown"
+            TextChanged="EditorBox_TextChanged"/>
+        
+        <!-- Shadow text overlay for completions -->
+        <TextBlock
+            x:Name="ShadowText"
+            IsHitTestVisible="False"
+            Foreground="{ThemeResource SystemControlDisabledBaseMediumLowBrush}"
+            Opacity="0.5"
+            Margin="8,8,8,8"
+            TextWrapping="Wrap"/>
+    </Grid>
+</UserControl>
