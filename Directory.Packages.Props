@@ -4,6 +4,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="coverlet.msbuild" Version="6.0.2" />
+    <PackageVersion Include="Microsoft.ML.OnnxRuntimeGenAI" Version="0.6.0" />
+    <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.2792.45" />
     <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.8.251003001" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.6584" />
     <PackageVersion Include="TngTech.ArchUnitNET" Version="0.12.3" />

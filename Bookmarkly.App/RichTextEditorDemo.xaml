@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Bookmarkly.App.RichTextEditorDemo"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:Bookmarkly.App"
+    xmlns:views="using:Bookmarkly.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Title -->
+        <TextBlock
+            Grid.Row="0"
+            Text="RichTextEditor with AI-Powered Text Completion"
+            Style="{ThemeResource TitleTextBlockStyle}"
+            Margin="0,0,0,20"/>
+
+        <!-- Instructions -->
+        <TextBlock
+            Grid.Row="1"
+            TextWrapping="Wrap"
+            Margin="0,0,0,20">
+            <Run Text="Start typing and see AI-powered completions appear as shadow text. Press "/>
+            <Run Text="Tab" FontWeight="Bold"/>
+            <Run Text=" or "/>
+            <Run Text="Right Arrow" FontWeight="Bold"/>
+            <Run Text=" to accept the suggestion. Try typing 'hello', 'the', or 'how' to see context-aware completions."/>
+        </TextBlock>
+
+        <!-- Editor -->
+        <Border
+            Grid.Row="2"
+            BorderThickness="1"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            CornerRadius="8"
+            Padding="12"
+            Margin="0,0,0,20">
+            <views:RichTextEditor
+                x:Name="Editor"
+                MinHeight="300"/>
+        </Border>
+
+        <!-- Context Input -->
+        <StackPanel Grid.Row="3" Margin="0,0,0,10">
+            <TextBlock
+                Text="Context for Smart Reply (when editor is empty):"
+                Margin="0,0,0,8"
+                FontWeight="SemiBold"/>
+            <TextBox
+                x:Name="ContextInput"
+                PlaceholderText="Enter context here to see smart reply suggestions when editor is empty..."
+                TextWrapping="Wrap"
+                MinHeight="80"
+                Text="Hello! I hope you're doing well today."
+                TextChanged="ContextInput_TextChanged"/>
+        </StackPanel>
+
+        <!-- Actions -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="10">
+            <Button Content="Clear Editor" Click="ClearEditor_Click"/>
+            <Button Content="Set Sample Text" Click="SetSampleText_Click"/>
+        </StackPanel>
+    </Grid>
+</Page>
