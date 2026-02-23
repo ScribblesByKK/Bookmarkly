@@ -14,6 +14,6 @@
     </Window.SystemBackdrop>
 
     <Grid Loaded="OnWindowLoaded">
-        <ListView ItemsSource="{x:Bind _datas, Mode=OneWay}"/>
+        <Frame x:Name="RootFrame" />
     </Grid>
 </Window>

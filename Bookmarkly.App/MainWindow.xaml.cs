@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using Cyclotron.Extensions.DependencyInjection;
 using Cyclotron.Telemetry.Logging;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,22 +7,12 @@ using Microsoft.UI.Xaml;
 namespace Bookmarkly.App;
 
 /// <summary>
-/// An empty window that can be used on its own or navigated to within a Frame.
+/// Main application window that hosts page navigation.
 /// </summary>
 public sealed partial class MainWindow : Window
 {
-    private readonly ObservableCollection<int> _datas = [];
     public MainWindow()
     {
-        _datas.Add(1);
-        _datas.Add(1);
-        _datas.Add(1);
-        _datas.Add(1);
-        _datas.Add(1);
-        _datas.Add(1);
-        _datas.Add(1);
-        _datas.Add(1);
-        _datas.Add(1);
         InitializeComponent();
     }
 
@@ -47,5 +36,7 @@ public sealed partial class MainWindow : Window
         var logger = provider.GetRequiredService<ICyclotronLogger>().ForModule("Instapaper");
 
         logger.LogInformation("Starting operation"); // Caller info auto-captured!
+
+        RootFrame.Navigate(typeof(SignInPage));
     }
 }
