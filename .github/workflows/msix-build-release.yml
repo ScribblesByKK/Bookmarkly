@@ -147,14 +147,14 @@ jobs:
         continue-on-error: false
 
       - name: Upload documentation artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: documentation
           path: _site
           retention-days: 7
 
       - name: Upload build output
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: build-output
           path: AppPackages/
@@ -218,14 +218,14 @@ jobs:
         shell: pwsh
 
       - name: Upload package artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: Bookmarkly_${{ needs.bump-version.outputs.version }}
           path: Bookmarkly_${{ needs.bump-version.outputs.version }}.zip
           if-no-files-found: error
 
       - name: Upload appinstaller artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: Bookmarkly_appinstaller
           path: Bookmarkly.appinstaller
