@@ -176,7 +176,7 @@ jobs:
 
     steps:
       - name: Download build output
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: build-output
           path: AppPackages/
@@ -241,7 +241,7 @@ jobs:
 
     steps:
       - name: Download package artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Bookmarkly_${{ needs.bump-version.outputs.version }}
           path: .
@@ -271,13 +271,13 @@ jobs:
           fetch-depth: 0
 
       - name: Download package artifact (ZIP)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Bookmarkly_${{ needs.bump-version.outputs.version }}
           path: ./package
 
       - name: Download appinstaller artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Bookmarkly_appinstaller
           path: ./package
@@ -442,7 +442,7 @@ jobs:
 
     steps:
       - name: Download documentation artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: documentation
           path: _site
