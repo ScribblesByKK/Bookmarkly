@@ -124,7 +124,7 @@ jobs:
       shell: bash
 
     - name: Add Coverage PR Comment
-      uses: marocchino/sticky-pull-request-comment@v2
+      uses: marocchino/sticky-pull-request-comment@v3
       if: github.event_name == 'pull_request' && steps.check_coverage.outputs.has_coverage == 'true'
       continue-on-error: true
       with:
