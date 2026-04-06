@@ -22,9 +22,15 @@
     <File Path=".editorconfig" />
     <File Path="Directory.Build.Props" />
     <File Path="Directory.Packages.Props" />
+    <File Path="global.json" />
   </Folder>
   <Folder Name="/_Tests/">
     <Project Path="Tests/ArchitectureTests/ArchitectureTests.csproj" Id="edef401a-ef1f-4d1f-ad39-835e698c835c" />
+  </Folder>
+  <Folder Name="/Uno/">
+    <Project Path="Bookmarkly.Uno/Bookmarkly.Uno.csproj" Id="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
+      <Deploy />
+    </Project>
   </Folder>
   <Project Path="Bookmarkly.App/Bookmarkly.App.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />

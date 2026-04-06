@@ -1,0 +1,41 @@
+<Project Sdk="Uno.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-desktop</TargetFrameworks>
+
+    <OutputType>Exe</OutputType>
+    <UnoSingleProject>true</UnoSingleProject>
+    <RootNamespace>Bookmarkly.Uno</RootNamespace>
+
+    <!-- Display name -->
+    <ApplicationTitle>Bookmarkly</ApplicationTitle>
+    <!-- App Identifier -->
+    <ApplicationId>com.bookmarkly.app</ApplicationId>
+    <!-- Versions -->
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+    <!-- Package Publisher -->
+    <ApplicationPublisher>Bookmarkly</ApplicationPublisher>
+    <!-- Package Description -->
+    <Description>Bookmarkly cross-platform app powered by Uno Platform.</Description>
+
+    <!--
+      UnoFeatures are used to quickly add and manage features enabled for your app.
+      https://aka.platform.uno/singleproject-features
+    -->
+    <UnoFeatures>
+      SkiaRenderer;
+    </UnoFeatures>
+  </PropertyGroup>
+
+  <!--
+    TODO: Re-enable these project references once the shared libraries are building successfully.
+    Currently the Bookmarkly.Entities.Abstractions project has build issues.
+
+  <ItemGroup>
+    <ProjectReference Include="..\Bookmarkly.Abstractions\Bookmarkly.Views.Abstractions.csproj" />
+    <ProjectReference Include="..\Bookmarkly.Entities.Abstractions\Bookmarkly.Entities.Abstractions.csproj" />
+    <ProjectReference Include="..\Bookmarkly.ViewModels\Bookmarkly.ViewModels.csproj" />
+  </ItemGroup>
+  -->
+
+</Project>
